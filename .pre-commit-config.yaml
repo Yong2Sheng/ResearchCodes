@@ -18,6 +18,8 @@ exclude: |
     .*\.ipynb
   )$
 
+code_files: &code_files '\.(py|md|rst|yml|yaml|toml|json)$'
+  
 
 # Categories:
 # - Format: keep code style consistent
@@ -46,8 +48,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         stages: [pre-push]
+        files: *code_files
       - id: end-of-file-fixer           # 确保文件末尾只有 1 个换行
         stages: [pre-push]
+        files: *code_files
       - id: check-merge-conflict        # prevent committing conflict markers
         stages: [pre-push]
       - id: check-yaml                  # validate .yml/.yaml
@@ -59,9 +63,9 @@ repos:
       - id: check-case-conflict         # warn about case-insensitive FS collisiois
         stages: [pre-push]      
       - id: mixed-line-ending           # 统一换行风格
-        stages: [pre-push]      
+        stages: [pre-push]   
+        files: *code_files   
         args: ["--fix=lf"]              # 统一 LF（推荐 macOS/Linux）
-        stages: [pre-push]
       - id: check-added-large-files     # 给「大文件」阈值一个你能接受的上限（默认 5MB）
         stages: [pre-push]
         args: ["--maxkb=10000"]         # 10MB；或换成你项目想要的大小
