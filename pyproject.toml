@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+markers = [
+  "smoke: fast checks to run before push",
+]
+addopts = "-ra"
+testpaths = ["tests"]

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  precommit:
+    name: pre-commit hooks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run pre-commit (skip pytest-smoke here)
+        uses: pre-commit/action@v3.0.1
+        env:
+          SKIP: pytest-smoke
+        with:
+          extra_args: --all-files --hook-stage pre-push
+
+  smoke:
+    name: smoke import test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up micromamba environment
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: environment.yml
+          environment-name: ci
+          cache-environment: true
+          condarc: |
+            channels:
+              - conda-forge
+              - defaults
+
+      - name: Run smoke tests
+        shell: micromamba-shell {0}
+        run: |
+          pytest -q -m smoke -x -ra
