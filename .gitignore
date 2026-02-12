@@ -1,9 +1,17 @@
-*checkpoints
-*egg_info/*
-.gitingore
-photozpy.egg-info/
-*__pycache__
-*.DS_Store*
-tests/
-src/photozpy/calibration/testing_files/
+# Jupyter / notebooks
+.ipynb_checkpoints/
 
+# Python caches
+__pycache__/
+*.py[cod]
+
+# pytest
+.pytest_cache/
+
+# packaging artifacts
+*.egg-info/
+build/
+dist/
+
+# macOS
+.DS_Store
