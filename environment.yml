@@ -1,0 +1,29 @@
+name: researchcode
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+
+  # notebooks
+  - jupyterlab
+  - ipykernel
+
+  # core scientific stack
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+
+  # astronomy stack (按你需求可删减)
+  - astropy
+  - astroquery
+
+  # dev tools
+  - pytest
+  - pre-commit
+  - ruff
+
+  # optional: nice-to-have
+  - rich
+  - tqdm
