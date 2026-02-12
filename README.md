@@ -23,7 +23,7 @@ Notes:
 - `environment.yml` is the source of truth for dependencies.
 - If you add a new import in any project module, update `environment.yml` accordingly.
 - Prefer keeping the environment reproducible on a clean machine, because CI will validate it.
-  
+
 During developing, you can update an existing environment to match `environment.yml` (and remove packages no longer listed):
 
 ```bash
