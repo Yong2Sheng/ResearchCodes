@@ -13,8 +13,8 @@ import random
 # Possible issues
 # It only works for two-model case: GAL + STAR
 # When plotting
-# We don't retrive photo-z from STAR model.
-# STAR model is only used for SED plotting and comparision
+# We don't retrieve photo-z from STAR model.
+# STAR model is only used for SED plotting and comparison
 
 class SpecResults():
 
@@ -291,7 +291,7 @@ class SpecResults():
 
                 ax[0].set_xscale("log")
                 ax[0].set_xlim([x_min, x_max])
-                ax[0].set_xlabel("Wavelenght (${\AA}$)", fontsize = 16)
+                ax[0].set_xlabel("Wavelength (${\AA}$)", fontsize = 16)
                 ax[0].xaxis.set_minor_formatter(mticker.ScalarFormatter())
                 ax[0].xaxis.set_minor_locator(plt.MaxNLocator(6))
                 ax[0].xaxis.set_major_formatter(mticker.ScalarFormatter())
