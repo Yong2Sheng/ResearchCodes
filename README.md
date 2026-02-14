@@ -17,7 +17,7 @@ Create a fresh environment:
 
 ```bash
 conda env create -f environment.yml
-conda activate researchcode
+conda activate researchcodes
 ```
 Notes:
 - `environment.yml` is the source of truth for dependencies.
