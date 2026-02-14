@@ -1,4 +1,4 @@
-name: researchcode
+name: researchcodes
 channels:
   - conda-forge
 dependencies:
