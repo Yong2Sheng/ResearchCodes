@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from typing import Dict, List, Tuple, Union
 
 
 KeyUpdates = Union[Dict[str, str], List[Tuple[str, str]]]
