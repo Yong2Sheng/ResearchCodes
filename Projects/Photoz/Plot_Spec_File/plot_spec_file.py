@@ -10,6 +10,9 @@ import matplotlib.colors as mcolors
 
 import random
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Possible issues
 # It only works for two-model case: GAL + STAR
 # When plotting
@@ -37,6 +40,7 @@ class SpecResults():
         Human-readable filter names aligned with the photometry rows in the file.
         These are attached to the magnitude table for plotting.
         The order of the filters must be the same as the input order for LePHARE zphot.
+    save_path : the saving path of the spectrum fitting result, optional
 
     Attributes
     ----------
@@ -86,6 +90,7 @@ class SpecResults():
         filters: list[str] = [
             "SDSS g'", "SDSS r'", "SDSS i'", "SDSS z'",
             "UVW2", "UVM2", "UVW1", "UUU", "UBB", "UVV",],
+        save_path: str | Path | None = None,
     ) -> None:
 
         """Read the results file and populate photometry, model, and PDF fields.
@@ -96,6 +101,7 @@ class SpecResults():
 
         self.__file_path = Path(file_path)
         self.__filters = filters
+        self.__save_path = save_path
 
         # read file by lines
         with open(self.__file_path, 'r') as file:
@@ -134,6 +140,10 @@ class SpecResults():
                                      nrows = 1,
                                      engine = "python").shift(axis=1).iloc[:, 1:]
         self._identifier = self._ident_df["Ident"][0]
+        self._Zphot = self._ident_df["Zphot"][0]
+        if self._Zphot == -99:
+            logger.info(f"Zphot is -99, skipp reading {self.__file_path}")
+            return
 
         # dataframe of the magnitudes
         mag_df_headers = lines_list[self._mag_idx].split()[1:]
@@ -255,6 +265,10 @@ class SpecResults():
 
         """
 
+        if self._Zphot == -99:
+            logger.info(f"Zphot is -99, skipp plotting {self.__file_path}")
+            return
+
         fig, ax = plt.subplots(figsize=(32,8), sharex=False, nrows=1, ncols=2,
                                gridspec_kw={"width_ratios": [2, 1], "wspace": 0.1})
 
@@ -309,8 +323,8 @@ class SpecResults():
 
         # plot observed magnitudes
         new_mag_df = SpecResults.drop_no_detections(self._mag_df) # drop bands without data (-99)
-        mags = new_mag_df["Mag"].to_numpy()
-        mags_error = new_mag_df["emag"].to_numpy()
+        mags = new_mag_df["Mag"].to_numpy(copy=True)
+        mags_error = new_mag_df["emag"].to_numpy(copy=True)
 
 
         lolims = np.zeros(len(mags))
@@ -357,5 +371,9 @@ class SpecResults():
             ax[1].set_xlabel("Redshift", fontsize = 16)
             ax[1].set_ylabel("Probability", fontsize = 16)
             ax[1].tick_params(axis="both", which="both", labelsize=16, length=6, width=1.5)
+
+        if self.__save_path is not None:
+            
+            fig.savefig(self.__save_path, dpi=300,  bbox_inches="tight")
 
         return
