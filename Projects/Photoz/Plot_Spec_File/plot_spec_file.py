@@ -139,7 +139,7 @@ class SpecResults():
         self._identifier = self._ident_df["Ident"][0]
         self._Zphot = self._ident_df["Zphot"][0]
         if self._Zphot == -99:
-            logger.info(f"Zphot is -99, skipp reading {self.__file_path}")
+            logger.info(f"Zphot is -99, skip reading {self.__file_path}")
             return
 
         # dataframe of the magnitudes
@@ -266,7 +266,7 @@ class SpecResults():
         """
 
         if self._Zphot == -99:
-            logger.info(f"Zphot is -99, skipp plotting {self.__file_path}")
+            logger.info(f"Zphot is -99, skip plotting {self.__file_path}")
             return
 
         fig, ax = plt.subplots(figsize=(32,8), sharex=False, nrows=1, ncols=2,
@@ -373,7 +373,7 @@ class SpecResults():
             ax[1].tick_params(axis="both", which="both", labelsize=16, length=6, width=1.5)
 
         if save_path is not None:
-            
+
             fig.savefig(save_path, dpi=300,  bbox_inches="tight")
 
         return
