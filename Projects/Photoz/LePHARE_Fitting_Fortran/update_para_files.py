@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple, Union, Optional
 
 
 KeyUpdates = Union[Dict[str, str], List[Tuple[str, str]]]
