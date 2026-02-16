@@ -40,7 +40,6 @@ class SpecResults():
         Human-readable filter names aligned with the photometry rows in the file.
         These are attached to the magnitude table for plotting.
         The order of the filters must be the same as the input order for LePHARE zphot.
-    save_path : the saving path of the spectrum fitting result, optional
 
     Attributes
     ----------
@@ -90,7 +89,6 @@ class SpecResults():
         filters: list[str] = [
             "SDSS g'", "SDSS r'", "SDSS i'", "SDSS z'",
             "UVW2", "UVM2", "UVW1", "UUU", "UBB", "UVV",],
-        save_path: str | Path | None = None,
     ) -> None:
 
         """Read the results file and populate photometry, model, and PDF fields.
@@ -101,7 +99,6 @@ class SpecResults():
 
         self.__file_path = Path(file_path)
         self.__filters = filters
-        self.__save_path = save_path
 
         # read file by lines
         with open(self.__file_path, 'r') as file:
@@ -246,6 +243,7 @@ class SpecResults():
     def plot_results(
         self,
         model_to_plot: Literal["all"] | list[str] | str = "all",
+        save_path: str | Path | None = None,
     ) -> None:
 
         """Plot observed photometry against model SEDs and optionally the z PDF.
@@ -255,6 +253,8 @@ class SpecResults():
         model_to_plot : "all" or list of str, optional
             Which model SED(s) to plot. If "all", plots every model found in the file.
             If a list, only models whose names appear in the list are plotted.
+        save_path : str, pathlib.Path or None
+            The saving path of the spectrum fitting result, optional
 
         Returns
         -------
@@ -372,8 +372,8 @@ class SpecResults():
             ax[1].set_ylabel("Probability", fontsize = 16)
             ax[1].tick_params(axis="both", which="both", labelsize=16, length=6, width=1.5)
 
-        if self.__save_path is not None:
+        if save_path is not None:
             
-            fig.savefig(self.__save_path, dpi=300,  bbox_inches="tight")
+            fig.savefig(save_path, dpi=300,  bbox_inches="tight")
 
         return
