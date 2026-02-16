@@ -10,6 +10,9 @@ import matplotlib.colors as mcolors
 
 import random
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Possible issues
 # It only works for two-model case: GAL + STAR
 # When plotting
@@ -134,6 +137,10 @@ class SpecResults():
                                      nrows = 1,
                                      engine = "python").shift(axis=1).iloc[:, 1:]
         self._identifier = self._ident_df["Ident"][0]
+        self._Zphot = self._ident_df["Zphot"][0]
+        if self._Zphot == -99:
+            logger.info(f"Zphot is -99, skip reading {self.__file_path}")
+            return
 
         # dataframe of the magnitudes
         mag_df_headers = lines_list[self._mag_idx].split()[1:]
@@ -236,6 +243,7 @@ class SpecResults():
     def plot_results(
         self,
         model_to_plot: Literal["all"] | list[str] | str = "all",
+        save_path: str | Path | None = None,
     ) -> None:
 
         """Plot observed photometry against model SEDs and optionally the z PDF.
@@ -245,6 +253,8 @@ class SpecResults():
         model_to_plot : "all" or list of str, optional
             Which model SED(s) to plot. If "all", plots every model found in the file.
             If a list, only models whose names appear in the list are plotted.
+        save_path : str, pathlib.Path or None
+            The saving path of the spectrum fitting result, optional
 
         Returns
         -------
@@ -254,6 +264,10 @@ class SpecResults():
             when available (non-QSO best-fit type in the current implementation).
 
         """
+
+        if self._Zphot == -99:
+            logger.info(f"Zphot is -99, skip plotting {self.__file_path}")
+            return
 
         fig, ax = plt.subplots(figsize=(32,8), sharex=False, nrows=1, ncols=2,
                                gridspec_kw={"width_ratios": [2, 1], "wspace": 0.1})
@@ -309,8 +323,8 @@ class SpecResults():
 
         # plot observed magnitudes
         new_mag_df = SpecResults.drop_no_detections(self._mag_df) # drop bands without data (-99)
-        mags = new_mag_df["Mag"].to_numpy()
-        mags_error = new_mag_df["emag"].to_numpy()
+        mags = new_mag_df["Mag"].to_numpy(copy=True)
+        mags_error = new_mag_df["emag"].to_numpy(copy=True)
 
 
         lolims = np.zeros(len(mags))
@@ -357,5 +371,9 @@ class SpecResults():
             ax[1].set_xlabel("Redshift", fontsize = 16)
             ax[1].set_ylabel("Probability", fontsize = 16)
             ax[1].tick_params(axis="both", which="both", labelsize=16, length=6, width=1.5)
+
+        if save_path is not None:
+
+            fig.savefig(save_path, dpi=300,  bbox_inches="tight")
 
         return
