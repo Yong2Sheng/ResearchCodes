@@ -128,15 +128,11 @@ def build_apass_h5(
         table.attrs.order = str(order)
         table.attrs.bucket_size = int(bucket_size)
 
-        for text_file in tqdm(
-            text_path,
-            desc="APASS files",
-            total=len(text_path),
-            position=0,
-            leave=True
-        ):
+        pbar = tqdm(text_path, desc="APASS files", total=len(text_path), position=0, leave=True)
+        for text_file in pbar:
 
             text_file = Path(text_file)
+            pbar.set_postfix_str(text_file.name, refresh=True)
 
             # count number of lines, note we need to remove the header line
             n_lines = count_lines_fast(text_file)
