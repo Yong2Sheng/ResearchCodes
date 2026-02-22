@@ -24,6 +24,10 @@ dependencies:
   - pre-commit
   - ruff
 
+  # generating standard star catalog
+  - pytables
+  - astropy-healpix
+
   # optional: nice-to-have
   - rich
   - tqdm
