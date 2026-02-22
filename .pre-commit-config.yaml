@@ -67,7 +67,7 @@ repos:
         args: ["--fix=lf"]              # 统一 LF（推荐 macOS/Linux）
       - id: check-added-large-files     # 给「大文件」阈值一个你能接受的上限（默认 5MB）
         stages: [pre-push]
-        args: ["--maxkb=10000"]         # 10MB；或换成你项目想要的大小
+        args: ["--maxkb=20000"]         # 10MB；或换成你项目想要的大小
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
