@@ -6,15 +6,14 @@ import tables as tb
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from tqdm.notebook import tqdm
-import math
 from astropy_healpix import HEALPix
 
 class APASSDR10Column(tb.IsDescription):
     id_name = tb.StringCol(16, pos = 0)
 
-    ra = tb.Float32Col(pos = 1)      # degree 
+    ra = tb.Float32Col(pos = 1)      # degree
     ra_err = tb.Float32Col(pos = 2)  # arcsec
-    dec = tb.Float32Col(pos = 3)     # degree 
+    dec = tb.Float32Col(pos = 3)     # degree
     dec_err = tb.Float32Col(pos = 4) # arcsec
 
     mag_B = tb.Float32Col(pos=5)
@@ -33,14 +32,10 @@ class APASSDR10Column(tb.IsDescription):
     emag_r = tb.Float32Col(pos=17)
     emag_i = tb.Float32Col(pos=18)
     emag_PanSTARRS_zs = tb.Float32Col(pos=19)
-    emag_PanSTARRS_Y = tb.Float32Col(pos=20)  
+    emag_PanSTARRS_Y = tb.Float32Col(pos=20)
 
     ipix = tb.Int32Col(pos=21)
     bucket = tb.Int32Col(pos=22)
-
-
-import math
-from pathlib import Path
 
 def count_lines_fast(path, block_size=1024 * 1024):
     # 返回总行数（包含第一行说明 header）
@@ -54,12 +49,12 @@ def count_lines_fast(path, block_size=1024 * 1024):
     return n
 
 def build_apass_h5(
-    text_path: str | Path | list[str | Path], 
-    h5_path: str | Path, 
-    nside: int, 
+    text_path: str | Path | list[str | Path],
+    h5_path: str | Path,
+    nside: int,
     bucket_size: int,
     *,
-    order: str = "nested", 
+    order: str = "nested",
     chunksize: int = 1_000_000,
 ) -> None:
     """
@@ -104,11 +99,11 @@ def build_apass_h5(
 
     hp = HEALPix(nside = nside, order = order, frame = "icrs")
 
-    # This line is setting "storage filters" for the PyTables/HDF5 
-    # dataset (table/array): compression, (optional) byte order 
-    # shuffling, checksum, etc. Once you pass it to 
-    # create_table(..., filters=filters) later, the data written 
-    # will be stored on disk according to these rules, which helps 
+    # This line is setting "storage filters" for the PyTables/HDF5
+    # dataset (table/array): compression, (optional) byte order
+    # shuffling, checksum, etc. Once you pass it to
+    # create_table(..., filters=filters) later, the data written
+    # will be stored on disk according to these rules, which helps
     # save space and speed up I/O (often making reads faster as well).
     filters = tb.Filters(complevel=5, complib="blosc:zstd", shuffle=True)
     # shuffle： 在压缩前把每个元素的字节重新排列，让相似字节靠在一起，通常能显著提高压缩比
@@ -117,29 +112,29 @@ def build_apass_h5(
     with tb.open_file(h5_path, mode = "w") as h5:
         group = h5.create_group("/", "apass", "APASS catalogs")
         table =  h5.create_table(
-            group, "dr10", 
-            APASSDR10Column, 
+            group, "dr10",
+            APASSDR10Column,
             "APASS DR10 (stream-ingested)",
             filters = filters
         )
-        
+
         table.attrs.ra_unit = "deg"
         table.attrs.dec_unit = "deg"
         table.attrs.ra_err_unit = "arcsec"
         table.attrs.dec_err_unit = "arcsec"
-        table.attrs.mag_system = {"Johnson_BV": "Vega", "SDSS_ugri": "AB", "PanSTARRS_zsY": "AB"} 
+        table.attrs.mag_system = {"Johnson_BV": "Vega", "SDSS_ugri": "AB", "PanSTARRS_zsY": "AB"}
         table.attrs.nside = int(nside)
         table.attrs.order = str(order)
         table.attrs.bucket_size = int(bucket_size)
 
         for text_file in tqdm(
-            text_path, 
-            desc="APASS files", 
-            total=len(text_path), 
-            position=0, 
+            text_path,
+            desc="APASS files",
+            total=len(text_path),
+            position=0,
             leave=True
         ):
-            
+
             text_file = Path(text_file)
 
             # count number of lines, note we need to remove the header line
@@ -158,7 +153,7 @@ def build_apass_h5(
                 # emag 8个
                 "emag_B","emag_V","emag_u","emag_g","emag_r","emag_i","emag_PanSTARRS_zs","emag_PanSTARRS_Y",
             ]
-            
+
             reader = pd.read_csv(
                 text_file,
                 sep=r"\s+",
@@ -172,7 +167,7 @@ def build_apass_h5(
             # read the text file in trunks
             for chunk in tqdm(
                 reader,
-                desc=f"chunks",
+                desc="chunks",
                 total=total_chunks,
                 position=1,
                 leave=False,
@@ -180,24 +175,24 @@ def build_apass_h5(
                 mininterval=0.1,
                 miniters=1
             ):
-                
+
                 # --- compute ipix/bucket
                 ra = chunk["ra"].to_numpy(dtype=float) * u.deg
                 dec = chunk["dec"].to_numpy(dtype=float) * u.deg
                 sc = SkyCoord(ra=ra, dec=dec, frame="icrs")
-                
+
                 ipix = hp.lonlat_to_healpix(sc.ra, sc.dec).astype(np.int32)
                 bucket = (ipix // int(bucket_size)).astype(np.int32)
 
                 out = np.empty(len(chunk), dtype=table.dtype)
-                
+
                 out["id_name"] = chunk["id_name"].astype(str).to_numpy()
-                
+
                 out["ra"] = chunk["ra"].to_numpy(dtype=np.float32)
                 out["ra_err"] = chunk["ra_err"].to_numpy(dtype=np.float32)
                 out["dec"] = chunk["dec"].to_numpy(dtype=np.float32)
                 out["dec_err"] = chunk["dec_err"].to_numpy(dtype=np.float32)
-    
+
                 # If your text file uses different column names, rename the DataFrame
                 # before calling build_apass_h5.
                 out["mag_B"] = chunk["mag_B"].to_numpy(dtype=np.float32)
@@ -207,10 +202,10 @@ def build_apass_h5(
                 out["mag_r"] = chunk["mag_r"].to_numpy(dtype=np.float32)
                 out["mag_i"] = chunk["mag_i"].to_numpy(dtype=np.float32)
                 out["mag_PanSTARRS_zs"] = chunk["mag_PanSTARRS_zs"].to_numpy(dtype=np.float32)
-    
+
                 # --- Y renamed here
                 out["mag_PanSTARRS_Y"] = chunk["mag_PanSTARRS_Y"].to_numpy(dtype=np.float32)
-    
+
                 out["emag_B"] = chunk["emag_B"].to_numpy(dtype=np.float32)
                 out["emag_V"] = chunk["emag_V"].to_numpy(dtype=np.float32)
                 out["emag_u"] = chunk["emag_u"].to_numpy(dtype=np.float32)
@@ -218,10 +213,10 @@ def build_apass_h5(
                 out["emag_r"] = chunk["emag_r"].to_numpy(dtype=np.float32)
                 out["emag_i"] = chunk["emag_i"].to_numpy(dtype=np.float32)
                 out["emag_PanSTARRS_zs"] = chunk["emag_PanSTARRS_zs"].to_numpy(dtype=np.float32)
-    
+
                 # --- Y renamed here
                 out["emag_PanSTARRS_Y"] = chunk["emag_PanSTARRS_Y"].to_numpy(dtype=np.float32)
-    
+
                 out["ipix"] = ipix
                 out["bucket"] = bucket
 
@@ -231,6 +226,3 @@ def build_apass_h5(
         table.cols.bucket.create_index()
         table.cols.ipix.create_index()
         table.flush()
-
-
-        
