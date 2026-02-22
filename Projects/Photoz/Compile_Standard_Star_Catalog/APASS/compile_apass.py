@@ -7,6 +7,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from tqdm.notebook import tqdm
 from astropy_healpix import HEALPix
+import math
 
 class APASSDR10Column(tb.IsDescription):
     id_name = tb.StringCol(16, pos = 0)
