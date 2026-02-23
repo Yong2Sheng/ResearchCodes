@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import tables as tb
+import time
 
 import astropy.units as u
 from astropy.coordinates import SkyCoord
@@ -223,3 +224,106 @@ def build_apass_h5(
         table.cols.bucket.create_index()
         table.cols.ipix.create_index()
         table.flush()
+
+
+def benchmark_cone_query(
+    h5_path,
+    group="/apass",
+    table_name="dr10",
+    center=SkyCoord(180.0*u.deg, 0.0*u.deg, frame="icrs"),
+    radius=5*u.arcmin,
+):
+    """
+    Very simple speed test:
+    one center coordinate + radius -> query candidates -> strict radial cut.
+    """
+
+    t0 = time.perf_counter()
+
+    with tb.open_file(h5_path, mode="r") as h5:
+        table = h5.get_node(group, table_name)
+
+        # read metadata written during build
+        nside = int(table.attrs.nside)
+        order = str(table.attrs.order)
+        bucket_size = int(table.attrs.bucket_size)
+
+        hp = HEALPix(nside=nside, order=order, frame="icrs")
+
+        # 1) HEALPix coarse selection: ipix list within radius
+        t1 = time.perf_counter()
+        ipix = hp.cone_search_lonlat(center.ra, center.dec, radius)
+        ipix = np.asarray(ipix, dtype=np.int64)
+        ipix_set = ipix  # keep as array for np.isin
+        buckets = np.unique(ipix_set // bucket_size).astype(np.int64)
+        t2 = time.perf_counter()
+
+        # 2) query by bucket using PyTables in-kernel condition (Numexpr)
+        # Build condition: (bucket==b0) | (bucket==b1) | ...
+        # NOTE: this is fine because radius is small, so bucket count is small.
+        if len(buckets) == 0:
+            empty = np.empty((0,), dtype=table.dtype)
+            return {
+                "n_ipix": 0,
+                "n_bucket": 0,
+                "n_candidates_bucket": 0,
+                "n_candidates_ipix": 0,
+                "n_final_in_radius": 0,
+                "dt_ipix_sec": t2 - t1,
+                "dt_bucket_query_sec": 0.0,
+                "dt_postfilter_sec": 0.0,
+                "dt_total_sec": time.perf_counter() - t0,
+                "rows_final": empty,
+            }
+
+        cond = "(" + ") | (".join([f"(bucket == {b})" for b in buckets]) + ")"
+        t3 = time.perf_counter()
+        rows_bucket = table.read_where(cond)
+        t4 = time.perf_counter()
+
+        # 3) in-memory refine by ipix, then strict radial cut
+        t5 = time.perf_counter()
+        mask_ipix = np.isin(rows_bucket["ipix"], ipix_set)
+        rows_ipix = rows_bucket[mask_ipix]
+
+        # strict radial cut in spherical distance
+        sc_rows = SkyCoord(
+            ra=rows_ipix["ra"] * u.deg,
+            dec=rows_ipix["dec"] * u.deg,
+            frame="icrs",
+        )
+        sep = center.separation(sc_rows)
+        mask_r = sep <= radius
+        rows_final = rows_ipix[mask_r]
+        t6 = time.perf_counter()
+
+    out = {
+        "nside": nside,
+        "order": order,
+        "bucket_size": bucket_size,
+        "n_ipix": int(len(ipix_set)),
+        "n_bucket": int(len(buckets)),
+        "n_candidates_bucket": int(len(rows_bucket)),
+        "n_candidates_ipix": int(len(rows_ipix)),
+        "n_final_in_radius": int(len(rows_final)),
+        "dt_ipix_sec": t2 - t1,
+        "dt_bucket_query_sec": t4 - t3,
+        "dt_postfilter_sec": t6 - t5,
+        "dt_total_sec": (t6 - t0),
+        "rows_final": rows_final,  # numpy structured array
+        "cond": cond,
+    }
+
+    # pretty print
+    print(f"nside={out['nside']} order={out['order']} bucket_size={out['bucket_size']}")
+    print(f"radius={radius.to(u.arcmin):.3f}")
+    print(f"ipix count: {out['n_ipix']}, bucket count: {out['n_bucket']}")
+    print(f"bucket candidates: {out['n_candidates_bucket']}")
+    print(f"ipix refined: {out['n_candidates_ipix']}")
+    print(f"final in radius: {out['n_final_in_radius']}")
+    print(f"time ipix: {out['dt_ipix_sec']:.4f} s")
+    print(f"time bucket query: {out['dt_bucket_query_sec']:.4f} s")
+    print(f"time postfilter: {out['dt_postfilter_sec']:.4f} s")
+    print(f"time total: {out['dt_total_sec']:.4f} s")
+
+    return out
