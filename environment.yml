@@ -31,3 +31,7 @@ dependencies:
   # optional: nice-to-have
   - rich
   - tqdm
+
+  # generating observation calendar events
+  - astroplan
+  - icalendar
