@@ -1,7 +1,50 @@
+[project]
+name = "ResearchCodes"
+version = "0.1.0"
+description = "Research Codes"
+authors = [{ name = "Yong Sheng", email = "sheng2@clemson.edu" }]
+requires-python = ">=3.11,<3.12"
+
+
+# Pytest configuration stored in pyproject.toml.
+# This section is equivalent to settings in pytest.ini / [tool:pytest] in setup.cfg.
 [tool.pytest.ini_options]
+
+# Require at least pytest 6.0; pytest will error out with a helpful message if an older version is used.
 minversion = "6.0"
+# Register custom markers used in this test suite to document them and avoid "unknown marker" warnings.
 markers = [
   "smoke: fast checks to run before push",
 ]
+
+# Default command-line options to pass to pytest every time it runs.
+# -ra: show a short summary for all test outcomes (especially skipped/failed/xfailed, etc.).
 addopts = "-ra"
+
+# Directories where pytest should look for tests when no paths are given on the command line.
 testpaths = ["tests"]
+
+# -----------------------------
+# Build system configuration (PEP 517/518)
+# -----------------------------
+[build-system]
+# Build-time requirements: tools that must be installed in the isolated build environment
+# before building a wheel/sdist. Here we require setuptools 68+.
+requires = ["setuptools>=68"]
+
+# The PEP 517 build backend that will perform the build.
+# "setuptools.build_meta" is setuptools' official backend for PEP 517 builds.
+build-backend = "setuptools.build_meta"
+
+# -----------------------------
+# Setuptools configuration (src layout)
+# -----------------------------
+[tool.setuptools]
+# Tell setuptools that the "root package directory" is the "src/" folder.
+# In other words, packages are not located at the repository root, but under src/.
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+# Enable automatic package discovery and restrict the search path to "src/".
+# Setuptools will scan src/ and include any Python packages it finds there.
+where = ["src"]
