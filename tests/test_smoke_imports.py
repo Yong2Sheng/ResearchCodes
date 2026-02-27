@@ -5,4 +5,4 @@ import pytest
 def test_import():
     import researchcodes
 
-    assert hasattr(researchcodes, "__version__")  # or: assert photozpy is not None
+    assert hasattr(researchcodes, "__version__")
