@@ -43,6 +43,11 @@ jobs:
               - conda-forge
               - defaults
 
+      - name: Install package (editable)
+        shell: micromamba-shell {0}
+        run: |
+          python -m pip install -e . --no-deps
+
       - name: Run smoke tests
         shell: micromamba-shell {0}
         run: |
