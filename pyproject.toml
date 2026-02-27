@@ -15,14 +15,14 @@ minversion = "6.0"
 # Register custom markers used in this test suite to document them and avoid "unknown marker" warnings.
 markers = [
   "smoke: fast checks to run before push",
-] 
+]
 
 # Default command-line options to pass to pytest every time it runs.
 # -ra: show a short summary for all test outcomes (especially skipped/failed/xfailed, etc.).
 addopts = "-ra"
 
 # Directories where pytest should look for tests when no paths are given on the command line.
-testpaths = ["tests"] 
+testpaths = ["tests"]
 
 # -----------------------------
 # Build system configuration (PEP 517/518)
@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 # Tell setuptools that the "root package directory" is the "src/" folder.
 # In other words, packages are not located at the repository root, but under src/.
-package-dir = { "" = "src" } 
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 # Enable automatic package discovery and restrict the search path to "src/".
