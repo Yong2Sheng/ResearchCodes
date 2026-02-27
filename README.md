@@ -13,11 +13,12 @@ cd ResearchCodes
 
 ### 2) Create the conda environment from `environment.yml`
 
-Create a fresh environment:
+Create a fresh environment and install `researchcodes` in editable mode:
 
 ```bash
 conda env create -f environment.yml
 conda activate researchcodes
+python -m pip install -e . --no-deps
 ```
 Notes:
 - `environment.yml` is the source of truth for dependencies.
