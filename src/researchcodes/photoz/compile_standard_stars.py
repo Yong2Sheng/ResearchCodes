@@ -253,13 +253,13 @@ def iter_multi_csv_chunks(
 
         for chunk in pbar_chunks:
             n = len(chunk)
-            
+
             if "ra_err" not in chunk.columns:
                 chunk["ra_err"] = np.full(n, np.nan, dtype=np.float32)
-                
+
             if "dec_err" not in chunk.columns:
                 chunk["dec_err"] = np.full(n, np.nan, dtype=np.float32)
-                
+
             yield file, chunk
 
 def write_std_h5(
