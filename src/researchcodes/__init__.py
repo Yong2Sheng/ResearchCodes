@@ -6,6 +6,7 @@ from .photoz import (
     iter_multi_csv_chunks,
     write_std_h5,
     SpecResults,
+    count_lines_fast,
 )
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "iter_multi_csv_chunks",
     "write_std_h5",
     "SpecResults",
+    "count_lines_fast",
 ]

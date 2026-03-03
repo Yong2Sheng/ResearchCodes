@@ -1,25 +1,120 @@
+from __future__ import annotations
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import tables as tb
+import math
+from collections.abc import Mapping
 
 import astropy.units as u
 from tqdm.notebook import tqdm
+from astropy.coordinates import SkyCoord
 from astropy_healpix import HEALPix
 import math
-from typing import Optional, Iterator, Literal, Any
+from typing import Optional, Iterator, Literal, Any, Union
 TableDescription = dict[str, tb.Col] | type[tb.IsDescription]
 
+def infer_non_data_lines(read_csv_kwargs: Mapping) -> Optional[int]:
+    """
+    Infer how many *physical lines* at the start of the file are NOT data rows.
+
+    We want to align:
+      - physical line count from count_lines_fast()
+      - actual number of data rows pd.read_csv(...) will yield
+
+    This function returns:
+      non_data_lines = skiprows_lines + header_lines
+
+    Rules (pandas semantics):
+    1) skiprows:
+       - if skiprows is int: it skips that many physical lines at the top
+       - if skiprows is list-like or callable: cannot infer without scanning,
+         so we return None
+
+    2) header:
+       - header=None: no header line is consumed from the file
+       - header=0 (or any int): one header line is consumed (the specified row
+         provides column names, and that line is not part of data)
+       - header is a list of ints (MultiIndex): consumes len(header) lines
+       - header="infer" (default): behaves like header=0 in the common case
+
+    3) names interaction:
+       - If names are passed explicitly, pandas says behavior is identical to
+         header=None, *unless* you explicitly pass header=0 to replace existing
+         names. So:
+           - names provided and header is None/"infer": header_lines = 0
+           - names provided and header=0 (or list): header_lines follows header
+    """
+    # skiprows
+    skiprows = read_csv_kwargs.get("skiprows", 0)
+    if skiprows is None:
+        skiprows_lines = 0
+    elif isinstance(skiprows, int):
+        skiprows_lines = max(skiprows, 0)
+    else:
+        # list-like or callable, we cannot infer without reading the file
+        return None
+
+    # header
+    header = read_csv_kwargs.get("header", "infer")
+    names = read_csv_kwargs.get("names", None)
+
+    # Decide header_lines carefully based on pandas doc semantics
+    if header is None:
+        header_lines = 0
+    elif isinstance(header, list):
+        header_lines = len(header)
+    else:
+        # header is "infer" or an int like 0,1,2...
+        # If names provided, pandas says it acts like header=None,
+        # except when header=0 is explicitly used to replace existing names.
+        if names is not None and header == "infer":
+            header_lines = 0
+        else:
+            header_lines = 1
+
+    return skiprows_lines + header_lines
+
 def count_lines_fast(path, block_size=1024 * 1024):
-    # 返回总行数（包含第一行说明 header）
     n = 0
+    last_byte = b""
     with open(path, "rb") as f:
         while True:
             b = f.read(block_size)
             if not b:
                 break
             n += b.count(b"\n")
+            last_byte = b[-1:]
+    # 如果文件非空且最后一个字节不是 \n，说明最后一行没被计入
+    if last_byte and last_byte != b"\n":
+        n += 1
     return n
+
+def estimate_total_chunks(
+    file: Union[str, Path],
+    chunksize: int,
+    read_csv_kwargs: Mapping,
+    count_lines_fn,
+) -> Optional[int]:
+    """
+    Estimate how many chunks pd.read_csv(..., chunksize=...) will yield.
+
+    Returns:
+      - int total_chunks if we can infer it
+      - None if we cannot safely infer it (use tqdm(total=None))
+    """
+    if chunksize <= 0:
+        raise ValueError("chunksize must be > 0")
+
+    non_data = infer_non_data_lines(read_csv_kwargs)
+    if non_data is None:
+        return None
+
+    n_lines = count_lines_fn(file)  # includes header line(s) physically present
+    n_data_lines = max(n_lines - non_data, 0)
+    if n_data_lines == 0:
+        return 0
+    return math.ceil(n_data_lines / chunksize)
 
 def define_column_desc(
     magnitude_column_names: list[str],
@@ -197,11 +292,6 @@ def iter_multi_csv_chunks(
 
     read_csv_kwargs = dict(read_csv_kwargs or {})
 
-    # check if skiprows is an int number
-    skiprows = read_csv_kwargs.get("skiprows", 0)
-    if not isinstance(skiprows, int):
-        raise TypeError("read_csv_kwargs['skiprows'] must be an int (skip first N lines).")
-
     # check if chunksize is in read_csv_kwargs as well.
     # If both arg and read_csv_kwargs define chunksize,
     # then compare if they are equal.
@@ -228,14 +318,13 @@ def iter_multi_csv_chunks(
 
         pbar_files.set_postfix_str(file.name, refresh = True)
 
-        # count number of lines, note we need to remove the header line
-        n_lines = count_lines_fast(file)
-        # skip the rows that are not counted as standard star rows
-        # these rows are also skipped when reading the csv standard file
-        nrows = max(n_lines - skiprows, 0)
-
         # calculate the total chunks for tqdm progress bar
-        total_chunks = math.ceil(nrows / chunksize) if nrows else 0
+        total_chunks = estimate_total_chunks(
+            file=file,
+            chunksize=chunksize,
+            read_csv_kwargs=read_csv_kwargs,
+            count_lines_fn=count_lines_fast,
+        )
 
         reader = pd.read_csv(file, chunksize = chunksize, **read_csv_kwargs)
 
@@ -264,6 +353,7 @@ def iter_multi_csv_chunks(
 
 def write_std_h5(
     dataframe_iterator: Iterator[tuple[Path, pd.DataFrame]],
+    ra_dec_hmsdms: bool,
     h5_output_path: str | Path,
     group_where: str,
     group_name: str,
@@ -296,6 +386,8 @@ def write_std_h5(
         ``chunk_df``. Each ``chunk_df`` must contain the columns required to fill
         all non-derived table fields (e.g., ``id_name``, ``ra``, ``dec``, and any
         magnitude or uncertainty columns defined by ``table_description``).
+    ra_dec_hmsdms : bool
+        If the input ra and dec are in hmsdms, they will be converted to degdeg.
     h5_output_path : str | pathlib.Path
         Output HDF5 file path. The file will be overwritten if it already exists.
     group_where : str
@@ -405,16 +497,26 @@ def write_std_h5(
         # start writing files
         for file, chunk in dataframe_iterator:
 
+            # if format is hmsdms, convert to degdeg
+            if ra_dec_hmsdms:
+                coord = SkyCoord(
+                    ra=chunk["ra"],
+                    dec=chunk["dec"],
+                    unit=(u.hourangle, u.deg),
+                )
+                chunk["ra"] = coord.ra.deg
+                chunk["dec"] = coord.dec.deg
+
             # calculate ipx and bucket numbers
             ra = chunk["ra"].to_numpy(dtype=float) * u.deg
             dec = chunk["dec"].to_numpy(dtype=float) * u.deg
+                
             ipix = hp.lonlat_to_healpix(ra, dec).astype(np.int32)
             bucket = (ipix // int(bucket_size)).astype(np.int32)
             index_column = {
                 "ipix": ipix,
                 "bucket": bucket,
             }
-
 
             # initialize numpy structured array
             # this means the order of assigning columns values
