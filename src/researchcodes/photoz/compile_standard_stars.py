@@ -10,7 +10,6 @@ import astropy.units as u
 from tqdm.notebook import tqdm
 from astropy.coordinates import SkyCoord
 from astropy_healpix import HEALPix
-import math
 from typing import Optional, Iterator, Literal, Any, Union
 TableDescription = dict[str, tb.Col] | type[tb.IsDescription]
 
@@ -510,7 +509,7 @@ def write_std_h5(
             # calculate ipx and bucket numbers
             ra = chunk["ra"].to_numpy(dtype=float) * u.deg
             dec = chunk["dec"].to_numpy(dtype=float) * u.deg
-                
+
             ipix = hp.lonlat_to_healpix(ra, dec).astype(np.int32)
             bucket = (ipix // int(bucket_size)).astype(np.int32)
             index_column = {
