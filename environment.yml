@@ -35,3 +35,9 @@ dependencies:
   # generating observation calendar events
   - astroplan
   - icalendar
+
+  # VIRT
+  - ccdproc
+  - healpy
+  - astroquery
+  - tabulate
