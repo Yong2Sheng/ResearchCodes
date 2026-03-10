@@ -23,7 +23,7 @@ from tqdm.notebook import tqdm
 warnings.filterwarnings("ignore", category=FITSFixedWarning)
 
 class VIRTPointingReport:
-    
+
     """
     Generate pointing-quality diagnostics for one or more VIRT FITS images.
 
@@ -58,7 +58,7 @@ class VIRTPointingReport:
     objects can be transformed accordingly when needed. If this class is later
     extended to other instruments or more diverse WCS products, the plotting code
     should be revisited so that annotation coordinates are transformed to the
-    actual celestial frame implied by the image WCS before plotting.  
+    actual celestial frame implied by the image WCS before plotting.
     """
 
     def __init__(
@@ -89,24 +89,24 @@ class VIRTPointingReport:
 
         """
         Plot the nominal pointing and WCS-derived field center for each FITS image.
-    
+
         For every file in ``self.files``, this method:
-    
+
         1. checks that a usable celestial WCS is present,
         2. obtains the nominal telescope pointing from the FITS header,
         3. obtains the center of the image from the solved WCS, and
         4. overlays both coordinates on the FITS image.
-    
+
         Parameters
         ----------
         save : bool, optional
             If True, save each generated FITS overlay plot to disk. Default is True.
-    
+
         Raises
         ------
         MissingWCSError
             If any FITS file does not contain usable celestial WCS information.
-    
+
         Returns
         -------
         None
@@ -141,37 +141,37 @@ class VIRTPointingReport:
 
         """
         Build and print a Markdown table summarizing pointing offsets.
-    
+
         For each FITS file, this method compares the nominal telescope pointing from
         the header with the WCS-derived image center, and reports:
-    
+
         - the file name,
         - the nominal pointing coordinate,
         - the field-of-view center coordinate,
         - the RA offset,
         - the Dec offset, and
         - the total angular separation in arcseconds.
-    
+
         The table is printed to the console in GitHub-flavored Markdown format and
         can optionally be written to a Markdown file.
-    
+
         Parameters
         ----------
         save : bool, optional
             If True, save the generated Markdown table to
             ``Image_Offset_Report.md`` in the current working directory.
             Default is True.
-    
+
         Raises
         ------
         MissingWCSError
             If any FITS file does not contain usable celestial WCS information.
-    
+
         Returns
         -------
         None
         """
-        
+
         # table headers
         headers = ["File", "Pointing", "FOV Center", "RA Error", "Dec Error", "Separation[arcsec]"]
 
@@ -182,7 +182,7 @@ class VIRTPointingReport:
         rows: list[list[str]] = []
 
         for file in tqdm(self.files):
-    
+
             if not VIRTPointingReport.has_wcs(
                 file=file,
                 hdu_index=self.hdu_index,
@@ -195,7 +195,7 @@ class VIRTPointingReport:
                 hdu_index=self.hdu_index,
             )
 
-            # seperate two coordinates
+            # separate two coordinates
             pointing = SkyCoord(
                 ra=pointing_and_center_coords.ra.deg[0],
                 dec=pointing_and_center_coords.dec.deg[0],
@@ -239,18 +239,18 @@ class VIRTPointingReport:
 
         """
         Collect unique target coordinates from FITS headers.
-    
+
         This method reads ``OBJRA`` and ``OBJDEC`` from each FITS file, removes
         duplicate coordinates while preserving first-seen order, and returns the
         resulting target list as a single ``SkyCoord`` object.
-    
+
         Parameters
         ----------
         format_coords : bool, optional
             If True, return a formatted coordinate string representation using
             ``SkyCoord.to_string("hmsdms")``. If False, return the raw ``SkyCoord``
             object. Default is True.
-    
+
         Returns
         -------
         SkyCoord | str
@@ -261,7 +261,7 @@ class VIRTPointingReport:
         seen = set()
         ra = []
         dec = []
-        
+
         for file in tqdm(self.files):
 
             coord: SkyCoord = VIRTPointingReport.get_skycoord_from_header(
@@ -270,7 +270,7 @@ class VIRTPointingReport:
                 ra_header_key="OBJRA",
                 dec_header_key="OBJDEC",
             )
-            
+
             key = (float(coord.ra.deg), float(coord.dec.deg))
             if key in seen:
                 continue
@@ -299,11 +299,11 @@ class VIRTPointingReport:
 
         """
         Plot all distinct targets on an all-sky Aitoff map.
-    
+
         The coordinates are taken from ``self.get_target_coordinates`` and are
         transformed to the requested plotting frame before being displayed on a
         Matplotlib Aitoff projection.
-    
+
         Parameters
         ----------
         target_names : list[str]
@@ -315,13 +315,13 @@ class VIRTPointingReport:
             and ``"icrs"``. Default is ``"galactic"``.
         save : bool, optional
             If True, save the generated all-sky plot to disk. Default is True.
-    
+
         Raises
         ------
         ValueError
             If the number of names does not match the number of target coordinates,
             or if ``frame`` is unsupported.
-    
+
         Returns
         -------
         None
@@ -331,11 +331,11 @@ class VIRTPointingReport:
             target_names = [target_names]
 
         skycoords = self.get_target_coordinates(format_coords=False,)
-        
+
         if len(skycoords) != len(target_names):
             raise ValueError("The number of coordinates must match the number of target names.")
 
-    
+
         # unify plotting frame
         if frame.lower() == "galactic":
             coords = skycoords.galactic
@@ -351,13 +351,13 @@ class VIRTPointingReport:
             ylabel = "Declination"
         else:
             raise ValueError("frame must be 'galactic' or 'icrs'")
-    
+
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection="aitoff")
         ax.grid(True)
-    
+
         ax.scatter(lon, lat, s=40)
-    
+
         for x, y, name in zip(lon, lat, target_names):
             ax.annotate(
                 name,
@@ -367,7 +367,7 @@ class VIRTPointingReport:
                 ha="left",
                 va="bottom",
             )
-    
+
         ax.set_title("All-sky target map")
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -375,7 +375,7 @@ class VIRTPointingReport:
 
         if save:
             fig.savefig("All_sky_target_map", dpi=150,  bbox_inches="tight")
-        plt.show()   
+        plt.show()
 
     @staticmethod
     def plot_fits_with_skycoords(
@@ -388,12 +388,12 @@ class VIRTPointingReport:
 
         """
         Plot a FITS image with one or more celestial coordinates overlaid.
-    
+
         The FITS image is displayed using its WCS projection, and the supplied
         coordinates are drawn on top of the image together with text labels.
         Image contrast is scaled with an asinh stretch for improved visibility of
         both bright and faint structures.
-    
+
         Parameters
         ----------
         file : Path | str
@@ -406,45 +406,45 @@ class VIRTPointingReport:
         save : bool, optional
             If True, save the generated figure as a PNG file named after the FITS
             stem. Default is True.
-    
+
         Raises
         ------
         ValueError
             If the number of coordinates does not match the number of labels.
-    
+
         Returns
         -------
         None
         """
-        
+
         file = Path(file)
-    
+
         # check if the number of coordinates match the number of labels
         if len(skycoords) != len(labels):
             raise ValueError("The number of sky coordinates don't match labels.")
-    
+
         # read fits file
         with fits.open(file) as hdul:
             hdu = hdul[hdu_index]
             wcs = WCS(hdu.header)
             data = hdu.data
             header = hdu.header
-    
+
         fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": wcs})
-    
+
         # asinh can preserve both bright cores and dime sources and structures
         norm = simple_norm(data, stretch="asinh", percent=99.5)
-        
+
         # plot data
         im = ax.imshow(data, origin="lower", cmap="gray", norm=norm)
         ax.grid(color="white", ls="solid", alpha=0.5)
         ax.set_xlabel("RA")
         ax.set_ylabel("Dec")
-        
+
         # loop the colors if need to plot more than 6 coordinates
         colors = ["pink", "cyan", "yellow", "lime", "orange", "magenta"]
         edgecolors = [colors[i % len(colors)] for i in range(len(skycoords))]
-        
+
         # plot coordinates
         ax.scatter_coord(
             skycoords,
@@ -453,10 +453,10 @@ class VIRTPointingReport:
             edgecolors=edgecolors,
             linewidths=1.5,
         )
-            
+
         # plot labels
         for coord, label, color in zip(skycoords, labels, edgecolors):
-            
+
             ax.annotate(
                 label,
                 xy=(coord.ra.deg, coord.dec.deg),
@@ -467,30 +467,30 @@ class VIRTPointingReport:
                 ha="left",
                 va="bottom",
             )
-        
+
         fig.colorbar(im, ax=ax, pad=0.02)
 
         ax.set_title(f"{file.stem}\n{header['DATE-OBS']}")
-        
+
         if save:
             fig.savefig(file.parent / f"{file.stem}.png", dpi=150,  bbox_inches="tight")
-    
-        plt.show()        
-    
+
+        plt.show()
+
     @staticmethod
     def has_wcs(
         file: str | Path,
         hdu_index: int = 0,
         require_celestial: bool = True,
     ) -> bool:
-        
+
         """
         Check whether a FITS HDU contains usable WCS information.
-    
+
         This method attempts to construct an ``astropy.wcs.WCS`` object from the
         specified FITS header. By default, it requires that the WCS include a
         celestial component, such as RA/Dec axes.
-    
+
         Parameters
         ----------
         file : str | Path
@@ -500,28 +500,28 @@ class VIRTPointingReport:
         require_celestial : bool, optional
             If True, require a celestial WCS component. If False, accept any parsed
             WCS with at least one axis. Default is True.
-    
+
         Returns
         -------
         bool
             True if usable WCS information is present, otherwise False.
-    
+
         Notes
         -----
         Any exception encountered while opening the FITS file or parsing the WCS is
         caught and treated as a False result.
         """
-        
+
         try:
             with fits.open(file, memmap=False) as hdul:
                 header = hdul[hdu_index].header
                 w = WCS(header)
-    
+
                 if require_celestial:
                     return bool(w.has_celestial)
-    
+
                 return w.naxis > 0
-    
+
         except Exception:
             return False
 
@@ -535,11 +535,11 @@ class VIRTPointingReport:
 
         """
         Read a celestial coordinate pair from FITS header keywords.
-    
+
         This method extracts one RA-like keyword and one Dec-like keyword from the
         specified FITS header and returns them as a ``SkyCoord`` object in the FK5
         frame.
-    
+
         Parameters
         ----------
         file : Path | str
@@ -550,19 +550,19 @@ class VIRTPointingReport:
             Header keyword containing the right ascension value. Default is ``"RA"``.
         dec_header_key : str, optional
             Header keyword containing the declination value. Default is ``"Dec"``.
-    
+
         Returns
         -------
         SkyCoord
             Coordinate pair parsed from the FITS header.
-    
+
         Notes
         -----
         In the VIRT workflow, ``RA`` and ``Dec`` are used for the nominal telescope
         pointing, while ``OBJRA`` and ``OBJDEC`` describe the requested science
         target position.
         """
-        
+
         with fits.open(file, memmap=False) as hdul:
             header = hdul[hdu_index].header
 
@@ -584,22 +584,22 @@ class VIRTPointingReport:
 
         """
         Compute the sky coordinate of the image center pixel using WCS.
-    
+
         The geometric center of the image array is computed in pixel coordinates and
         then transformed into a celestial coordinate using the FITS WCS solution.
-    
+
         Parameters
         ----------
         file : Path | str
             FITS image file.
         hdu_index : int, optional
             HDU index containing the image data and WCS header. Default is 0.
-    
+
         Returns
         -------
         SkyCoord
             Sky coordinate corresponding to the center pixel of the image.
-    
+
         Raises
         ------
         MissingWCSError
@@ -635,23 +635,23 @@ class VIRTPointingReport:
 
         """
         Return the nominal telescope pointing and WCS-derived image center.
-    
+
         This is a convenience method that combines the nominal pointing coordinate
         from the FITS header with the field-of-view center derived from the solved
         WCS into a single two-element ``SkyCoord`` object.
-    
+
         Parameters
         ----------
         file : Path
             FITS file to inspect.
         hdu_index : int, optional
             HDU index used for header and image access. Default is 0.
-    
+
         Returns
         -------
         tuple[SkyCoord, list[str]]
             A tuple containing:
-    
+
             - a two-element ``SkyCoord`` object with
               ``[pointing, fov_center]``, and
             - a matching list of labels
@@ -690,26 +690,26 @@ class VIRTPointingReport:
 
         """
         Compute coordinate offsets and angular separation between two positions.
-    
+
         The method returns the local RA offset, the local Dec offset, and the total
         on-sky angular separation between two celestial coordinates.
-    
+
         Parameters
         ----------
         c1 : SkyCoord
             Reference coordinate.
         c2 : SkyCoord
             Comparison coordinate.
-    
+
         Returns
         -------
         tuple[str, str, Angle]
             A tuple containing:
-    
+
             - RA offset formatted as an HMS-like string,
             - Dec offset formatted as a DMS-like string, and
             - total angular separation as an Astropy angle object.
-    
+
         Notes
         -----
         The RA and Dec offsets are computed using spherical coordinate offsets,
@@ -718,15 +718,15 @@ class VIRTPointingReport:
 
         # 1) angular separation
         sep = c1.separation(c2)
-    
+
         # 2) separation along RA and Dec
         # dra, ddec are all Angles
         dra, ddec = c1.spherical_offsets_to(c2)
-    
+
         # 3) format
         dra_hms = dra.to_string(unit=u.hourangle, sep=":", precision=3, alwayssign=True)
         ddec_dms = ddec.to_string(unit=u.deg, sep=":", precision=3, alwayssign=True)
-    
+
         return dra_hms, ddec_dms, sep
 
 class MissingWCSError(ValueError):
