@@ -9,10 +9,15 @@ from .photoz import (
     count_lines_fast,
 )
 
+from .virt import (
+    VIRTPointingReport,
+)
+
 __all__ = [
     "define_column_desc",
     "iter_multi_csv_chunks",
     "write_std_h5",
     "SpecResults",
     "count_lines_fast",
+    "VIRTPointingReport",
 ]
