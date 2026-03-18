@@ -137,6 +137,7 @@ class VIRTPointingReport:
     def get_offset_form(
         self,
         save: bool = True,
+        saving_dir: Path | None = None,
     ) -> None:
 
         """
@@ -158,9 +159,10 @@ class VIRTPointingReport:
         Parameters
         ----------
         save : bool, optional
-            If True, save the generated Markdown table to
-            ``Image_Offset_Report.md`` in the current working directory.
-            Default is True.
+            Whether to save the generated Markdown table to disk. Default is True.
+        saving_dir : Path | None, optional
+            Output directory for the Markdown file when ``save=True``. If None and
+            ``save=True``, it will be saved to the directory where fits files live.
 
         Raises
         ------
@@ -173,13 +175,28 @@ class VIRTPointingReport:
         """
 
         # table headers
-        headers = ["File", "Pointing", "FOV Center", "RA Error", "Dec Error", "Separation[arcsec]"]
+        headers = [
+            "File",
+            "Requested Center",
+            "FOV Center",
+            "RA Error [hms]",
+            "Dec Error [dms]",
+            "Separation [deg]",
+        ]
 
         # saving dir
-        saving_dir = self.files[0].parent
+        if saving_dir is None:
+            saving_dir = self.files[0].parent
+        else:
+            saving_dir = Path(saving_dir)
 
         # table rows
         rows: list[list[str]] = []
+
+        # ra, dec and angular separations
+        self.dra: list[str] = []
+        self.ddec: list[str] = []
+        self.sep: list[Angle] = []
 
         for file in tqdm(self.files):
 
@@ -214,22 +231,114 @@ class VIRTPointingReport:
                 c2=fov_center,
             )
 
+            self.dra.append(dra)
+            self.ddec.append(ddec)
+            self.sep.append(sep)
+
             rows.append(
                 [file.stem,
                  pointing.to_string("hmsdms", sep=":", precision=4),
                  fov_center.to_string("hmsdms", sep=":", precision=4),
                  dra,
                  ddec,
-                 sep.value,
+                 f"{sep.value:.5f}",
                 ]
             )
 
         # print table
-        md = tabulate(rows, headers=headers, tablefmt="github")
-        print(md)
+        self.md = tabulate(rows, headers=headers, tablefmt="github")
+        print(self.md)
 
         if save:
-            Path(saving_dir/"Image_Offset_Report.md").write_text(md, encoding="utf-8")
+            Path(saving_dir/"Image_Offset_Report.md").write_text(self.md, encoding="utf-8")
+
+
+    def get_offset_statistics(
+        self,
+        save: bool = True,
+        saving_dir: Path | None = None,
+    ) -> None:
+
+        """
+        Compute summary statistics for pointing offsets and format them as a
+        Markdown table.
+
+        This method converts the stored RA offsets, Dec offsets, and angular
+        separations into Astropy ``Angle`` arrays, then computes the mean and the
+        sample standard deviation (1σ, using ``ddof=1``) for each quantity.
+
+        The results are stored on the instance in both human-readable form and as
+        a Markdown table.
+
+        Parameters
+        ----------
+        save : bool, optional
+            Whether to save the generated Markdown table to disk. Default is True.
+        saving_dir : Path | None, optional
+            Output directory for the Markdown file when ``save=True``. If None and
+            ``save=True``, it will be saved to the directory where fits files live.
+
+        Returns
+        -------
+        None
+            This method updates instance attributes in place and does not return
+            anything.
+
+        Notes
+        -----
+        - ``self.dra`` is interpreted as hour-angle formatted offsets.
+        - ``self.ddec`` is interpreted as degree-formatted offsets.
+        - ``self.sep`` is expected to be a list of ``Angle`` objects.
+        - RA and Dec statistics are formatted as sexagesimal strings.
+        - Separation statistics should use a unit consistent with the table header
+          (for example, arcsec if the header says ``[arcsec]``).
+        """
+
+        # saving dir
+        if saving_dir is None:
+            saving_dir = self.files[0].parent
+        else:
+            saving_dir = Path(saving_dir)
+
+        # construct the ra error, dec error, and angular separations
+        dras = Angle(self.dra, unit=u.hourangle)
+        ddecs = Angle(self.ddec, unit=u.deg)
+        seps = Angle(self.sep) # self.sep is a list of Angle, here I turn it to a single Angle object
+
+        # mean values
+        self.dras_mean: str = dras.mean().to_string(sep=":", precision=4)
+        self.ddecs_mean: str = ddecs.mean().to_string(sep=":", precision=4)
+        self.seps_mean: np.float64 = seps.mean().deg
+
+        # std
+        self.dras_std: str = dras.std(ddof=1).to_string(sep=":", precision=4)
+        self.ddecs_std: str = ddecs.std(ddof=1).to_string(sep=":", precision=4)
+        self.seps_std: np.float64 = seps.std(ddof=1).deg
+
+        # table headers
+        headers = [
+            "RA Error Mean ± 1σ [hms]",
+            "Dec Error Mean ± 1σ [dms]",
+            "Separation Mean ± 1σ [deg]",
+        ]
+
+        # table rows
+        rows: list[list[str]] = []
+
+        rows.append(
+            [f"{self.dras_mean} +/- {self.dras_std}",
+             f"{self.ddecs_mean} +/- {self.ddecs_std}",
+             f"{self.seps_mean:.5f} +/- {self.seps_std:.5f}"
+            ]
+        )
+
+        # print table
+        self.md_statistics = tabulate(rows, headers=headers, tablefmt="github")
+        print(self.md_statistics)
+
+        if save:
+            Path(saving_dir/"Image_Offset_Report_Statistics.md").write_text(self.md_statistics, encoding="utf-8")
+
 
 
     def get_target_coordinates(
