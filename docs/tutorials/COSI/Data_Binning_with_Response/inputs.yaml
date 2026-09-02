@@ -7,7 +7,7 @@ ori_file: "NA" # full path
 unbinned_output: 'fits' # 'fits' or 'hdf5'
 time_bins: 1 # time bin size in seconds. Takes int, float, or list of bin edges.
 energy_bins: [100.0, 158.489, 251.189, 398.107, 630.957, 1000.0, 1584.89, 2511.89, 3981.07, 6309.57, 10000.0] # Takes list. Needs to match response.
-phi_pix_size: 6 # binning of Compton scattering anlge [deg]
+phi_pix_size: 6 # binning of Compton scattering angle [deg]
 nside: 8 # healpix binning of psi chi local
 scheme: 'ring' # healpix binning of psi chi local
 tmin: 1835478000.0 # Min time cut in seconds.
