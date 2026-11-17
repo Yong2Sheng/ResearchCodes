@@ -33,10 +33,11 @@
   ],
   "author": "",
   "license": "MIT",
-  "homepage": "https://yong2sheng.github.io/compton-telescope-visualization/",
+  "homepage": "https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Yong2Sheng/compton-telescope-visualization.git"
+    "url": "git+https://github.com/Yong2Sheng/ResearchCodes.git",
+    "directory": "docs/tutorials/COSI/Compton_Telescope_Visualization"
   },
   "dependencies": {
     "katex": "^0.19.1"

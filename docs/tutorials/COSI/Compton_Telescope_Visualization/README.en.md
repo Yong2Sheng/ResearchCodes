@@ -1,8 +1,10 @@
-[中文](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/README.md) | **English**
+[中文](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/README.md) | **English**
 
 # Compton Telescope Visualization
 
 Three offline 3D demonstrations for research talks and teaching: event-cone geometry, photon event reconstruction and the Compton Data Space (CDS), and the 2D-to-3D Compton scattering process. Open the HTML files directly — a WebGL-capable browser is required, and no server is needed.
+
+This project is maintained as one of the COSI tutorials in the `ResearchCodes` repository.
 
 ## Demo pages
 
@@ -10,18 +12,18 @@ Click a page name to open the live demo (GitHub Pages) — nothing to download. 
 
 | Live demo | What it shows |
 | --- | --- |
-| [reconstruction.html](https://yong2sheng.github.io/compton-telescope-visualization/reconstruction.html) | **Full pipeline.** Photon incidence → first Compton scatter → full absorption at the second site → event cone → parameter card → CDS point accumulation. Includes Klein–Nishina sampling, incident-energy and source-direction controls, batch addition of 1000 events, two map projections, event history, Chinese/English UI and free navigation. |
-| [event-cone-rotation.html](https://yong2sheng.github.io/compton-telescope-visualization/event-cone-rotation.html) | **Geometry explorer.** Manually control the scattering angle and rotate around the source axis to see a real event cone and the trace left by the back-projection axis endpoint on the direction sphere; tracks from different scattering angles are kept. |
-| [compton-scattering.html](https://yong2sheng.github.io/compton-telescope-visualization/compton-scattering.html) | **Step-by-step walkthrough.** Electron at rest and incident photon → one Compton scatter, with the scattered photon and recoil electron revealed together → measurements at the two interaction sites → planar-to-3D camera move → event circle and candidate incident-direction sweep. Includes energy and scattering-angle controls, automatic stepping, Chinese/English UI and free navigation. |
+| [reconstruction.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/reconstruction.html) | **Full pipeline.** Photon incidence → first Compton scatter → full absorption at the second site → event cone → parameter card → CDS point accumulation. Includes Klein–Nishina sampling, incident-energy and source-direction controls, batch addition of 1000 events, two map projections, event history, Chinese/English UI and free navigation. |
+| [event-cone-rotation.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/event-cone-rotation.html) | **Geometry explorer.** Manually control the scattering angle and rotate around the source axis to see a real event cone and the trace left by the back-projection axis endpoint on the direction sphere; tracks from different scattering angles are kept. |
+| [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | **Step-by-step walkthrough.** Electron at rest and incident photon → one Compton scatter, with the scattered photon and recoil electron revealed together → measurements at the two interaction sites → planar-to-3D camera move → event circle and candidate incident-direction sweep. Includes energy and scattering-angle controls, automatic stepping, Chinese/English UI and free navigation. |
 
 `event-cone-rotation.html` is the new name of the original rotation animation. The transitional projection preview page has been removed; both projections remain available in the full demo.
 
 ## Documentation
 
-- [Changelog](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/CHANGELOG.md): changes listed by date, with scope and corresponding commits for traceability.
-- [Full reconstruction demo](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/RECONSTRUCTION.md): operation, physical model, projections, limitations and verification.
-- [Rotation demo](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/EVENT_CONE_ROTATION.md): original geometric derivation, track rules and validation record.
-- [Stepwise scattering demo](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/SCATTERING_DEMO.md): presentation sequence, physical model and PowerPoint usage notes.
+- [Changelog](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/CHANGELOG.md): changes listed by date, with scope and corresponding commits for traceability.
+- [Full reconstruction demo](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/RECONSTRUCTION.md): operation, physical model, projections, limitations and verification.
+- [Rotation demo](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/EVENT_CONE_ROTATION.md): original geometric derivation, track rules and validation record.
+- [Stepwise scattering demo](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/SCATTERING_DEMO.md): presentation sequence, physical model and PowerPoint usage notes.
 - [Azimuthal equidistant projection (ArcGIS Pro help)](https://doc.esri.com/en/arcgis-pro/latest/help/mapping/properties/azimuthal-equidistant.html): official description of different planar projections, useful when interpreting the projection choices in the demos.
 
 The current version does not implement rigid translation of the standard cone for arbitrary source positions. The relevant conventions and possible future display modes are documented in the "Limitations" section of the full reconstruction description.

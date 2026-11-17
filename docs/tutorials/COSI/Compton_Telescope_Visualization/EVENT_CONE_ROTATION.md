@@ -92,7 +92,7 @@ npm run test:browser   # 需要本机 Chrome；默认读取 macOS 的 Chrome 路
 
 这一约定在页面右侧常驻显示，也在“说明 / 约定”弹层中完整说明。
 
-- 物理坐标系：右手系 x、y、z。Three.js 的渲染坐标采用保向的 z-up 映射  
+- 物理坐标系：右手系 x、y、z。Three.js 的渲染坐标采用保向的 z-up 映射
   `render = (x_phys, z_phys, −y_phys)`，因此 Three.js 世界 +Y 对应物理 +z，右手性不变。
 - **χ 从 −z 轴量起**，范围 0°–180°。
 - **ψ 是 xy 平面方位角，从 +y 朝 +x 增大**，范围 0°–360°。

@@ -1,8 +1,10 @@
-**中文** | [English](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/README.en.md)
+**中文** | [English](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/README.en.md)
 
 # Compton Telescope Visualization
 
 用于科研演讲与教学的三个离线三维演示：event cone 的几何关系、光子事件重建与 Compton Data Space（CDS），以及从 2D 到 3D 的 Compton 散射过程。直接双击 HTML 即可使用，需要支持 WebGL 的浏览器，不需要启动服务器。
+
+本项目作为 `ResearchCodes` 仓库中 `docs/tutorials/COSI/` 下的教程之一维护。
 
 ## 页面入口
 
@@ -10,18 +12,18 @@
 
 | 在线演示 | 内容 |
 | --- | --- |
-| [reconstruction.html](https://yong2sheng.github.io/compton-telescope-visualization/reconstruction.html) | **完整演示。** 光子入射 → 第一次 Compton 散射 → 第二处完全吸收 → event cone → 参数卡片 → CDS 点累积。支持 Klein–Nishina 抽样、能量与源方向设置、批量增加 1000 个事件、两种投影、历史事件、中英文和自由观察。 |
-| [event-cone-rotation.html](https://yong2sheng.github.io/compton-telescope-visualization/event-cone-rotation.html) | **几何探索。** 手动控制散射角与绕源轴旋转，观察真实 event cone 以及反投影轴端点在方向球上的轨迹，保留不同散射角的历史轨迹。 |
-| [compton-scattering.html](https://yong2sheng.github.io/compton-telescope-visualization/compton-scattering.html) | **分步讲解。** 静止电子与入射光子 → 一次 Compton 散射，散射光子与反冲电子同时逐步显现 → 两处相互作用的测量 → 平面到 3D 的相机过渡 → event circle 与候选入射方向的扫描。支持能量与散射角设置、自动步进、中英文和自由观察。 |
+| [reconstruction.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/reconstruction.html) | **完整演示。** 光子入射 → 第一次 Compton 散射 → 第二处完全吸收 → event cone → 参数卡片 → CDS 点累积。支持 Klein–Nishina 抽样、能量与源方向设置、批量增加 1000 个事件、两种投影、历史事件、中英文和自由观察。 |
+| [event-cone-rotation.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/event-cone-rotation.html) | **几何探索。** 手动控制散射角与绕源轴旋转，观察真实 event cone 以及反投影轴端点在方向球上的轨迹，保留不同散射角的历史轨迹。 |
+| [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | **分步讲解。** 静止电子与入射光子 → 一次 Compton 散射，散射光子与反冲电子同时逐步显现 → 两处相互作用的测量 → 平面到 3D 的相机过渡 → event circle 与候选入射方向的扫描。支持能量与散射角设置、自动步进、中英文和自由观察。 |
 
 `event-cone-rotation.html` 是最初旋转动画的新文件名。过渡用的投影预览页面已删除，两种投影继续保留在完整演示中。
 
 ## 说明文档
 
-- [更新记录](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/CHANGELOG.md)：按日期登记每一步改动的说明、影响范围和对应提交，便于追溯。
-- [完整重建演示说明](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/RECONSTRUCTION.md)：操作、物理模型、投影、限制及验证方法。
-- [绕源旋转演示说明](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/EVENT_CONE_ROTATION.md)：原始几何推导、轨迹规则与验证记录。
-- [分步散射演示说明](https://github.com/Yong2Sheng/compton-telescope-visualization/blob/main/SCATTERING_DEMO.md)：演示流程、物理模型与 PowerPoint 使用建议。
+- [更新记录](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/CHANGELOG.md)：按日期登记每一步改动的说明、影响范围和对应提交，便于追溯。
+- [完整重建演示说明](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/RECONSTRUCTION.md)：操作、物理模型、投影、限制及验证方法。
+- [绕源旋转演示说明](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/EVENT_CONE_ROTATION.md)：原始几何推导、轨迹规则与验证记录。
+- [分步散射演示说明](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/SCATTERING_DEMO.md)：演示流程、物理模型与 PowerPoint 使用建议。
 - [方位等距投影（ArcGIS Pro 帮助）](https://doc.esri.com/en/arcgis-pro/latest/help/mapping/properties/azimuthal-equidistant.html)：不同平面投影的官方说明，供理解演示中投影选择时参考。
 
 当前不实现“任意源位置下标准圆锥刚性平移”。相关物理约定与以后可以采用的显示方式记录在完整演示说明的“限制”部分。

@@ -2,7 +2,7 @@
 
 按时间倒序记录本项目的每一步修改：改了什么、影响哪些文件、怎么验证，以及对应的 Git 提交。需要看具体代码差异时，用条目的提交号执行 `git show <提交号>`。
 
-- 开源仓库：<https://github.com/Yong2Sheng/compton-telescope-visualization>
+- 开源仓库：<https://github.com/Yong2Sheng/ResearchCodes/tree/develop/docs/tutorials/COSI/Compton_Telescope_Visualization>
 - 日期为 `America/New_York` 本地日期（与仓库提交时间一致）。
 - 提交号为 7 位短哈希；打了标签的提交单独标注标签名。
 - 类型前缀沿用仓库提交习惯：`feat` 新功能、`fix` 修复、`style` 样式、`docs` 文档、`chore` 维护。
@@ -14,6 +14,12 @@
 | --- | --- | --- | --- |
 | `baseline-2026-11-07` | `529347d` | 2026-11-07 | 建立仓库时保存的演示基线版本 |
 | `audit-fixes-2026-11-08` | `f394f1a` | 2026-11-08 | 一轮独立核查后完成的问题修复 |
+
+## 2026-11-17
+
+### 仓库调整
+
+- `docs` 项目迁移到 `ResearchCodes` 仓库的 `docs/tutorials/COSI/Compton_Telescope_Visualization/`，作为 COSI 教程的一部分维护；保留完整提交历史，在线演示改由 ResearchCodes 的 GitHub Pages 托管。（本提交）
 
 ## 2026-11-11
 
