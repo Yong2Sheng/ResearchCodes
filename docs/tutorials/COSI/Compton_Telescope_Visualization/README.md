@@ -1,43 +1,45 @@
-**中文** | [English](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/README.en.md)
+**English** | [中文](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/README.zh.md)
 
 # Compton Telescope Visualization
 
-用于科研演讲与教学的三个离线三维演示：event cone 的几何关系、光子事件重建与 Compton Data Space（CDS），以及从 2D 到 3D 的 Compton 散射过程。直接双击 HTML 即可使用，需要支持 WebGL 的浏览器，不需要启动服务器。
+Five offline interactive demos for research talks and teaching: three 3D WebGL demos — event-cone geometry, photon event reconstruction and the Compton Data Space (CDS), and the 2D-to-3D Compton scattering process — plus two focused explainers on ASAD grid readout / polarization calibration and Compton distance cuts. Open the HTML files directly; no server is needed, and the three 3D demos require a WebGL-capable browser.
 
-本项目作为 `ResearchCodes` 仓库中 `docs/tutorials/COSI/` 下的教程之一维护。
+This project is maintained as one of the COSI tutorials in the `ResearchCodes` repository.
 
-## 页面入口
+## Demo pages
 
-点击页面名直接打开在线演示（GitHub Pages），无需下载；离线使用时双击仓库根目录中的同名 HTML 文件。GitHub 的文件视图只显示 HTML 源码，不会运行页面，所以入口链接指向的是在线演示地址。
+Click a page name to open the live demo (GitHub Pages) — nothing to download. To use a demo offline, open the HTML file with the same name from the repository root. GitHub's file view shows the HTML source only and never runs the page, which is why these links point to the hosted demos instead of the repository files.
 
-| 在线演示 | 内容 |
+| Live demo | What it shows |
 | --- | --- |
-| [reconstruction.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/reconstruction.html) | **完整演示。** 光子入射 → 第一次 Compton 散射 → 第二处完全吸收 → event cone → 参数卡片 → CDS 点累积。支持 Klein–Nishina 抽样、能量与源方向设置、批量增加 1000 个事件、两种投影、历史事件、中英文和自由观察。 |
-| [event-cone-rotation.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/event-cone-rotation.html) | **几何探索。** 手动控制散射角与绕源轴旋转，观察真实 event cone 以及反投影轴端点在方向球上的轨迹，保留不同散射角的历史轨迹。 |
-| [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | **分步讲解。** 静止电子与入射光子 → 一次 Compton 散射，散射光子与反冲电子同时逐步显现 → 两处相互作用的测量 → 平面到 3D 的相机过渡 → event circle 与候选入射方向的扫描。支持能量与散射角设置、自动步进、中英文和自由观察。 |
+| [reconstruction.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/reconstruction.html) | **Full pipeline.** Photon incidence → first Compton scatter → full absorption at the second site → event cone → parameter card → CDS point accumulation. Includes Klein–Nishina sampling, incident-energy and source-direction controls, batch addition of 1000 events, two map projections, event history, Chinese/English UI and free navigation. |
+| [event-cone-rotation.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/event-cone-rotation.html) | **Geometry explorer.** Manually control the scattering angle and rotate around the source axis to see a real event cone and the trace left by the back-projection axis endpoint on the direction sphere; tracks from different scattering angles are kept. |
+| [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | **Step-by-step walkthrough.** Electron at rest and incident photon → one Compton scatter, with the scattered photon and recoil electron revealed together → measurements at the two interaction sites → planar-to-3D camera move → event circle and candidate incident-direction sweep. Includes energy and scattering-angle controls, automatic stepping, Chinese/English UI and free navigation. |
+| [asad-polarization-lab-v2-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/asad-polarization-lab-v2-bilingual.html) | **Polarization and grid calibration.** Study a 2D ASAD grid readout with unpolarized and adjustable-polarization inputs: pseudo-structure from grid rounding, polarization modulation, a distance cut, single-event direction readout, and a 2×2 transfer-matrix calibration. Teaching model only — not a real COSI response. |
+| [compton-distance-cuts-standalone-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-distance-cuts-standalone-bilingual.html) | **Distance cuts.** Drag the first-interaction distance to compare the direction range under fixed position uncertainty; shorter events are less certain about the direction. 2D teaching sketch with a fixed 0.5 mm error radius, not a COSI calibration or ARM result. |
 
-`event-cone-rotation.html` 是最初旋转动画的新文件名。过渡用的投影预览页面已删除，两种投影继续保留在完整演示中。
+`event-cone-rotation.html` is the new name of the original rotation animation. The transitional projection preview page has been removed; both projections remain available in the full demo. The last two topic demos are standalone bilingual pages; the first three are generated from the source under `src/`.
 
-## 说明文档
+## Documentation
 
-- [更新记录](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/CHANGELOG.md)：按日期登记每一步改动的说明、影响范围和对应提交，便于追溯。
-- [完整重建演示说明](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/RECONSTRUCTION.md)：操作、物理模型、投影、限制及验证方法。
-- [绕源旋转演示说明](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/EVENT_CONE_ROTATION.md)：原始几何推导、轨迹规则与验证记录。
-- [分步散射演示说明](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/SCATTERING_DEMO.md)：演示流程、物理模型与 PowerPoint 使用建议。
-- [方位等距投影（ArcGIS Pro 帮助）](https://doc.esri.com/en/arcgis-pro/latest/help/mapping/properties/azimuthal-equidistant.html)：不同平面投影的官方说明，供理解演示中投影选择时参考。
+- [Changelog](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/CHANGELOG.md): changes listed by date, with scope and corresponding commits for traceability.
+- [Full reconstruction demo](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/RECONSTRUCTION.md): operation, physical model, projections, limitations and verification.
+- [Rotation demo](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/EVENT_CONE_ROTATION.md): original geometric derivation, track rules and validation record.
+- [Stepwise scattering demo](https://github.com/Yong2Sheng/ResearchCodes/blob/develop/docs/tutorials/COSI/Compton_Telescope_Visualization/SCATTERING_DEMO.md): presentation sequence, physical model and PowerPoint usage notes.
+- [Azimuthal equidistant projection (ArcGIS Pro help)](https://doc.esri.com/en/arcgis-pro/latest/help/mapping/properties/azimuthal-equidistant.html): official description of different planar projections, useful when interpreting the projection choices in the demos.
 
-当前不实现“任意源位置下标准圆锥刚性平移”。相关物理约定与以后可以采用的显示方式记录在完整演示说明的“限制”部分。
+The current version does not implement rigid translation of the standard cone for arbitrary source positions. The relevant conventions and possible future display modes are documented in the "Limitations" section of the full reconstruction description.
 
-## 构建
+## Build
 
-HTML 已内嵌所需脚本。完整演示的 KaTeX 数学字体也内嵌在文件中，离线可用。只有需要修改源码并重新生成页面时，才需要安装构建依赖。
+The HTML files embed all required scripts. The KaTeX math fonts used by the full demo are embedded as well, so the pages work offline. Build dependencies are only needed when changing the source and regenerating the pages. The two standalone topic demos are delivered as-is and are not part of `npm run build:all`.
 
 ```bash
 npm install
 npm run build:all
 ```
 
-单独构建：
+Individual builds:
 
 ```bash
 npm run build                  # event-cone-rotation.html
@@ -45,7 +47,7 @@ npm run build:reconstruction   # reconstruction.html
 npm run build:scattering       # compton-scattering.html
 ```
 
-## 检查
+## Checks
 
 ```bash
 npm test
@@ -64,23 +66,24 @@ npm run test:scattering-browser
 npm run test:scattering-reveal
 ```
 
-浏览器检查需要 Google Chrome。
+Browser checks require Google Chrome.
 
-## 项目结构
+## Project layout
 
-- `src/physics.js`、`src/geometry.js`：共享角度约定、向量、能量和 event cone 几何。
-- `src/app.js`、`src/scene.js`、`src/history.js`：绕源旋转演示。
-- `src/event-simulation.js`：理想事件生成、Klein–Nishina 抽样与重建。
-- `src/reconstruction*.js`：完整流程、场景、界面与语言。
-- `src/angle-relations*.js`：完整演示中可选的 3D 角度辅助线。
-- `src/scattering*.js`：分步散射演示的模型与界面逻辑。
-- `src/cds-projections.js`：方向到平面显示的投影。
-- `src/math-typesetting.js`：统一数学排版。
-- `src/healpix-reference-data.json`：正式页面使用的 HEALPix 像素边界，以及数学测试使用的参考事件。
-- `src/*.template.html`、`build*.mjs`：页面模板与构建脚本。
-- `tests/`：当前可运行的验证入口。
-- `artifacts/`、`output/`、`node_modules/`：本地开发与测试产物，不纳入版本控制，克隆后无需它们即可打开 HTML。
+- Root `*.html`: five standalone demo pages; the first three are generated from `src/`, the two topic demos are delivered as-is.
+- `src/physics.js`, `src/geometry.js`: shared angle conventions, vectors, energies and event-cone geometry.
+- `src/app.js`, `src/scene.js`, `src/history.js`: rotation demo.
+- `src/event-simulation.js`: idealized event generation, Klein–Nishina sampling and reconstruction.
+- `src/reconstruction*.js`: full pipeline, scene, UI and language handling.
+- `src/angle-relations*.js`: optional 3D angle guides in the full demo.
+- `src/scattering*.js`: model and UI logic of the stepwise scattering demo.
+- `src/cds-projections.js`: projection from directions onto the planar display.
+- `src/math-typesetting.js`: unified math typesetting.
+- `src/healpix-reference-data.json`: HEALPix pixel boundaries used by the delivered pages, plus reference events used by the math tests.
+- `src/*.template.html`, `build*.mjs`: page templates and build scripts.
+- `tests/`: currently runnable verification entry points.
+- `artifacts/`, `output/`, `node_modules/`: local development and test artifacts, not versioned; a fresh clone can open the HTML files without them.
 
-## 许可
+## License
 
-以 MIT 许可发布，详见 [LICENSE](LICENSE)。可以自由使用、修改和再分发，保留版权与许可声明即可。这些演示是教学用的理想化模型，不适合直接用于科学数据分析。
+Released under the MIT License; see [LICENSE](LICENSE). You are free to use, modify and redistribute, provided the copyright and license notice are retained. These demos are idealized models for teaching and are not intended for direct use in scientific data analysis.

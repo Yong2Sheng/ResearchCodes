@@ -17,15 +17,23 @@
 
 ## 2026-11-17
 
+### 新增
+
+- `feat` 新增两个双语交互专题演示：`asad-polarization-lab-v2-bilingual.html`（ASAD 二维格点读出、偏振调制与传递矩阵校准）与 `compton-distance-cuts-standalone-bilingual.html`（Compton 距离 cut 与方向不确定度）。（提交 `2c91141`）
+
+### 文档
+
+- `docs` README 默认改为英文显示（`README.md`），中文版保留为 `README.zh.md`；两个新演示加入页面入口表、构建说明和项目结构。（本提交）
+
 ### 仓库调整
 
-- `docs` 项目迁移到 `ResearchCodes` 仓库的 `docs/tutorials/COSI/Compton_Telescope_Visualization/`，作为 COSI 教程的一部分维护；保留完整提交历史，在线演示改由 ResearchCodes 的 GitHub Pages 托管。（本提交）
+- `docs` 项目迁移到 `ResearchCodes` 仓库的 `docs/tutorials/COSI/Compton_Telescope_Visualization/`，作为 COSI 教程的一部分维护；保留完整提交历史，在线演示改由 ResearchCodes 的 GitHub Pages 托管。（提交 `26178ec`）
 
 ## 2026-11-11
 
 ### 文档
 
-- `docs` 新增英文 README（`README.en.md`），并在中英文两份 README 顶部加入语言切换入口，默认显示中文。（本提交）
+- `docs` 新增英文 README（`README.en.md`），并在中英文两份 README 顶部加入语言切换入口，默认显示中文。（提交 `6687cfa`）
 - `docs` 修正 README 的页面入口与说明文档链接：页面入口改为 GitHub Pages 在线演示地址，说明文档改为 GitHub 渲染页面，避免点击后只看到 HTML 源码或原始 Markdown。（提交 `7a7c77d`）
 - `docs` 整理公开发布：README 补充第三个演示入口、在线演示地址、完整构建与测试命令、项目结构与许可说明；公开仓库只保留成品文件和演示说明，本机工作笔记不纳入版本控制；同时启用 GitHub Pages 在线演示。（提交 `4e0eb34`）
 - `docs` README 增加“不同投影介绍页面”参考链接（ArcGIS Pro · 方位等距投影 Azimuthal Equidistant），供投影说明引用。（提交 `e56f86b`）
