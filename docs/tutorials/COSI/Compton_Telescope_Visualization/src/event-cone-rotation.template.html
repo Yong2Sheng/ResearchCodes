@@ -1,0 +1,1897 @@
+<!doctype html>
+<!--
+  Compton telescope real-space cone visualization
+  Copyright (c) 2026 the visualization authors
+  Released under the MIT License.
+
+  This single-file build bundles Three.js r160:
+  Copyright © 2010-2024 three.js authors
+  Licensed under the MIT License.
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Compton 事件锥 · 真实空间旋转几何</title>
+  <style>
+    :root {
+      --bg-0: #040a11;
+      --bg-1: #071421;
+      --panel: rgba(10, 22, 34, 0.88);
+      --panel-strong: rgba(13, 28, 42, 0.95);
+      --ink: #eaf3fa;
+      --muted: #93a8b9;
+      --faint: #6a8093;
+      --line: rgba(142, 174, 198, 0.16);
+      --line-strong: rgba(142, 174, 198, 0.27);
+      --red: #ff626c;
+      --red-soft: rgba(255, 98, 108, 0.16);
+      --blue: #5aabff;
+      --blue-soft: rgba(90, 171, 255, 0.14);
+      --green: #3ddc97;
+      --yellow: #ffd166;
+      --cyan: #5de0e6;
+      --orange: #ffb45e;
+      --violet: #c8a8ff;
+      --source: #ffd166;
+      --mono: "SFMono-Regular", "SF Mono", "Cascadia Code", "Liberation Mono", Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    html { background: var(--bg-0); }
+    body {
+      overflow: hidden;
+      color: var(--ink);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      background:
+        radial-gradient(1100px 740px at 62% 34%, rgba(30, 72, 99, 0.33), transparent 69%),
+        radial-gradient(720px 520px at 15% 88%, rgba(28, 100, 97, 0.12), transparent 72%),
+        radial-gradient(900px 600px at 86% 8%, rgba(66, 49, 99, 0.09), transparent 70%),
+        linear-gradient(145deg, #040a11 0%, #071421 52%, #040a11 100%);
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    [hidden] { display: none !important; }
+    .hidden { display: none !important; }
+    ::selection { background: rgba(90, 171, 255, 0.3); }
+
+    #app, #viewport {
+      position: absolute;
+      inset: 0;
+    }
+    #viewport { z-index: 1; }
+    .webgl-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+      outline: none;
+    }
+    .webgl-canvas:active { cursor: grabbing; }
+    body.fly-mode .webgl-canvas { cursor: crosshair; }
+
+    /* ------------------------------------------------------------------ */
+    /* Scene labels                                                        */
+    /* ------------------------------------------------------------------ */
+    #scene-labels {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .scene-label {
+      pointer-events: none;
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      padding: 3px 7px;
+      border: 1px solid rgba(143, 174, 198, 0.22);
+      border-radius: 7px;
+      background: rgba(5, 14, 23, 0.74);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.26);
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+      font-size: 11px;
+      line-height: 1.2;
+      color: var(--ink);
+      letter-spacing: 0.01em;
+      will-change: transform;
+    }
+    .label-main {
+      color: var(--label-accent, var(--ink));
+      font-weight: 650;
+      font-size: 12px;
+    }
+    .label-main i { font-family: Georgia, "Times New Roman", serif; font-size: 13px; }
+    .label-main sub { font-size: 8px; vertical-align: -2px; }
+    .label-sub {
+      color: var(--faint);
+      font-size: 9.5px;
+      letter-spacing: 0;
+    }
+    .label-source { border-color: rgba(255, 209, 102, 0.34); }
+    .label-source .label-main { color: var(--yellow); }
+    .label-a { border-color: rgba(90, 171, 255, 0.44); box-shadow: 0 0 18px rgba(90, 171, 255, 0.12); }
+    .label-a .label-main { color: var(--blue); font-size: 13px; }
+    .label-b { border-color: rgba(168, 184, 200, 0.3); }
+    .label-b .label-main { color: #c0ceda; }
+    .label-k { border-color: rgba(93, 224, 230, 0.32); }
+    .label-k .label-main { color: var(--cyan); }
+    .label-incoming { border-color: rgba(255, 180, 94, 0.32); }
+    .label-incoming .label-main { color: var(--orange); }
+    .label-aaxis { border-color: rgba(255, 123, 115, 0.24); }
+    .label-aaxis .label-main { color: #ff8f87; }
+    .label-angle { padding: 2px 6px; border-radius: 999px; font-size: 11px; }
+    .label-phi .label-main { color: var(--yellow); }
+    .label-chi .label-main { color: var(--violet); }
+    .label-psi .label-main { color: var(--orange); }
+    .label-angle .label-main sub { font-size: 8px; }
+    .label-origin .label-main { color: #f2f7fb; }
+    .label-axis {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--faint);
+      text-shadow: 0 1px 4px #040a11;
+      backdrop-filter: none;
+    }
+    .label-axis .label-main { color: inherit; font-weight: 500; font-size: 11px; }
+    .label-axis-x { color: #e39a7a; }
+    .label-axis-y { color: #8fcf9e; }
+    .label-axis-z { color: #86b7ef; }
+    .label-minus-z { color: #9682c8; }
+    .label-minus-z .label-sub { color: #6d6488; font-size: 9px; }
+
+    /* ------------------------------------------------------------------ */
+    /* Header and panels                                                   */
+    /* ------------------------------------------------------------------ */
+    .topbar {
+      position: absolute;
+      inset: 0 0 auto 0;
+      z-index: 12;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 20px 24px 16px;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(4, 10, 17, 0.86), rgba(4, 10, 17, 0));
+    }
+    .topbar > * { pointer-events: auto; }
+    .brand { max-width: 780px; }
+    .eyebrow {
+      margin-bottom: 6px;
+      color: #79a7bb;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.19em;
+      text-transform: uppercase;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(17px, 1.55vw, 22px);
+      font-weight: 650;
+      letter-spacing: 0.012em;
+      line-height: 1.24;
+    }
+    .brand p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.012em;
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(8, 20, 32, 0.78);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+    }
+    .badge:hover { border-color: rgba(199, 231, 247, 0.4); color: var(--ink); }
+    .badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--faint);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.025);
+    }
+    .badge-success { color: #b9f0d6; border-color: rgba(61, 220, 151, 0.31); }
+    .badge-success::before { background: var(--green); box-shadow: 0 0 10px rgba(61, 220, 151, 0.6); }
+    .badge-failure { color: #ffc6c9; border-color: rgba(255, 98, 108, 0.4); }
+    .badge-failure::before { background: var(--red); box-shadow: 0 0 10px rgba(255, 98, 108, 0.6); }
+
+    .ghost-button, .primary-button, .danger-button, .text-button {
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+      background: rgba(9, 21, 34, 0.6);
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 150ms ease, color 150ms ease, background 150ms ease, transform 150ms ease;
+    }
+    .ghost-button:hover, .text-button:hover {
+      color: var(--ink);
+      border-color: rgba(150, 193, 219, 0.45);
+      background: rgba(22, 45, 64, 0.55);
+    }
+    .ghost-button:active, .primary-button:active, .danger-button:active { transform: translateY(1px); }
+    .top-actions .ghost-button {
+      height: 30px;
+      padding: 0 11px;
+      font-size: 11px;
+      background: rgba(8, 20, 32, 0.7);
+    }
+    .icon-button {
+      width: 32px;
+      padding: 0 !important;
+      font-size: 16px !important;
+      line-height: 1;
+    }
+    button:focus-visible, input:focus-visible {
+      outline: 2px solid rgba(90, 171, 255, 0.85);
+      outline-offset: 2px;
+    }
+
+    .panel {
+      position: absolute;
+      z-index: 11;
+      top: 98px;
+      bottom: 22px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background:
+        linear-gradient(160deg, rgba(15, 31, 46, 0.91), rgba(7, 17, 27, 0.88) 56%, rgba(8, 18, 29, 0.9));
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(16px) saturate(1.15);
+      overflow: hidden;
+    }
+    .controls-panel {
+      left: 22px;
+      width: 336px;
+      overflow-y: auto;
+      padding: 16px 16px 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(133, 169, 191, 0.22) transparent;
+    }
+    .controls-panel::-webkit-scrollbar { width: 5px; }
+    .controls-panel::-webkit-scrollbar-thumb { background: rgba(133, 169, 191, 0.22); border-radius: 10px; }
+    .readout-panel {
+      right: 22px;
+      width: 302px;
+      padding: 16px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(133, 169, 191, 0.22) transparent;
+    }
+    .readout-panel::-webkit-scrollbar { width: 5px; }
+    .readout-panel::-webkit-scrollbar-thumb { background: rgba(133, 169, 191, 0.22); border-radius: 10px; }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 620;
+      letter-spacing: 0.035em;
+    }
+    .panel-kicker {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 0.16em;
+    }
+    .control-section {
+      padding: 14px 0 13px;
+      border-bottom: 1px solid rgba(142, 174, 198, 0.1);
+    }
+    .control-section:last-of-type { border-bottom: 0; }
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #d8e6f0;
+      font-size: 12px;
+      font-weight: 590;
+    }
+    .section-title .symbol {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 8.5px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .value-readout {
+      flex: 1;
+      min-width: 0;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+    .value-blue { color: var(--blue); }
+    input[type="number"] {
+      width: 75px;
+      height: 30px;
+      padding: 0 8px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: rgba(4, 12, 20, 0.7);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    input[type="number"]::-webkit-inner-spin-button { opacity: 0.55; }
+    input[type="number"].is-invalid { border-color: var(--red); background: rgba(255, 98, 108, 0.08); }
+    .range-scale {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 1px 0;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 8.5px;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 22px;
+      margin: 0;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+      --accent: var(--blue);
+    }
+    #phi-range { --accent: var(--red); }
+    #beta-range { --accent: var(--blue); }
+    #speed-range { --accent: var(--green); width: 86px; height: 16px; }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 3px;
+      border-radius: 99px;
+      background: linear-gradient(to right, color-mix(in srgb, var(--accent) 65%, transparent) 0%, rgba(142, 174, 198, 0.15) 0%);
+      background: rgba(142, 174, 198, 0.17);
+    }
+    input[type="range"]::-moz-range-track {
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(142, 174, 198, 0.17);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      margin-top: -5px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #0b1824;
+      box-shadow: 0 0 0 1px var(--accent), 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #0b1824;
+      box-shadow: 0 0 0 1px var(--accent), 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    .hint {
+      margin: 7px 0 0;
+      color: var(--faint);
+      font-size: 10px;
+      line-height: 1.58;
+      letter-spacing: 0.005em;
+    }
+    .hint strong { color: var(--muted); font-weight: 580; }
+    .inline-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 11px;
+    }
+    .primary-button {
+      flex: 1;
+      height: 34px;
+      border-color: rgba(90, 171, 255, 0.38);
+      background: linear-gradient(180deg, rgba(44, 102, 155, 0.56), rgba(21, 55, 86, 0.64));
+      color: #e4f2ff;
+      font-size: 11.5px;
+      font-weight: 560;
+      letter-spacing: 0.01em;
+    }
+    .primary-button:hover { border-color: rgba(116, 191, 255, 0.7); background: linear-gradient(180deg, rgba(52, 118, 178, 0.65), rgba(25, 63, 97, 0.7)); }
+    .primary-button.is-playing {
+      border-color: rgba(255, 209, 102, 0.35);
+      background: linear-gradient(180deg, rgba(122, 94, 32, 0.35), rgba(56, 43, 17, 0.45));
+      color: #ffe9a9;
+    }
+    .button-glyph { display: inline-block; margin-right: 4px; font-size: 9px; vertical-align: 1px; }
+    .speed-control {
+      color: var(--faint);
+      font-size: 9.5px;
+      white-space: nowrap;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+    .speed-control output {
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: rgba(4, 11, 18, 0.48);
+    }
+    .segment {
+      height: 29px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--faint);
+      font-size: 10.5px;
+      cursor: pointer;
+      transition: background 150ms ease, color 150ms ease;
+    }
+    .segment:hover { color: var(--ink); }
+    .segment.is-active {
+      background: rgba(90, 171, 255, 0.14);
+      color: #cbe7ff;
+      box-shadow: inset 0 0 0 1px rgba(90, 171, 255, 0.21);
+    }
+    .camera-section .hint { margin-top: 9px; }
+    .toggle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 8px;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 25px;
+      color: var(--muted);
+      font-size: 10.5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .toggle .switch {
+      position: relative;
+      width: 27px;
+      height: 15px;
+      flex: 0 0 auto;
+      border: 1px solid rgba(142, 174, 198, 0.24);
+      border-radius: 999px;
+      background: rgba(4, 11, 18, 0.65);
+      transition: background 150ms ease, border-color 150ms ease;
+    }
+    .toggle .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #7f96a8;
+      transition: transform 150ms ease, background 150ms ease;
+    }
+    .toggle input:checked + .switch {
+      border-color: rgba(90, 171, 255, 0.4);
+      background: rgba(50, 113, 170, 0.35);
+    }
+    .toggle input:checked + .switch::after { transform: translateX(12px); background: #9cd4ff; }
+    .toggle input:focus-visible + .switch { outline: 2px solid rgba(90, 171, 255, 0.8); outline-offset: 2px; }
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 13px;
+    }
+    .danger-button {
+      flex: 1;
+      height: 32px;
+      border-color: rgba(255, 98, 108, 0.25);
+      background: rgba(70, 23, 30, 0.24);
+      color: #ffb0b4;
+      font-size: 10.5px;
+    }
+    .danger-button:hover { border-color: rgba(255, 98, 108, 0.5); background: rgba(92, 27, 36, 0.34); color: #ffd0d2; }
+    .action-row .ghost-button { flex: 1; height: 32px; font-size: 10.5px; }
+    .panel-footer {
+      margin: 2px -16px 0;
+      padding: 12px 16px 15px;
+      border-top: 1px solid rgba(142, 174, 198, 0.1);
+      background: rgba(3, 10, 16, 0.36);
+      color: var(--faint);
+      font-size: 9.5px;
+      line-height: 1.55;
+    }
+    .panel-footer b { color: var(--muted); font-weight: 590; }
+
+    /* ------------------------------------------------------------------ */
+    /* Live readouts                                                       */
+    /* ------------------------------------------------------------------ */
+    .readout-block { padding-top: 11px; }
+    .readout-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 11px 0 5px;
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 590;
+      letter-spacing: 0.045em;
+    }
+    .readout-title span { color: var(--faint); font-family: var(--mono); font-weight: 400; letter-spacing: 0; }
+    .readout-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 22px;
+      color: var(--faint);
+      font-size: 10px;
+    }
+    .readout-row code {
+      color: #d5e6f1;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    .readout-row code.blue-code { color: #8dc7ff; }
+    .readout-row sub { font-size: 7px; }
+    .divider { height: 1px; margin: 10px 0; background: rgba(142, 174, 198, 0.1); }
+    .formula-mini {
+      margin: 7px 0 0;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 8.5px;
+      line-height: 1.6;
+    }
+    .energy-card {
+      margin-top: 14px;
+      padding: 11px 11px 10px;
+      border: 1px solid rgba(142, 174, 198, 0.13);
+      border-radius: 10px;
+      background: rgba(4, 12, 19, 0.35);
+    }
+    .energy-card .readout-title { margin-top: 0; }
+    .energy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .energy-grid div {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 7px 8px;
+      border: 1px solid rgba(142, 174, 198, 0.1);
+      border-radius: 7px;
+      background: rgba(5, 14, 23, 0.4);
+    }
+    .energy-grid span { color: var(--faint); font-size: 9px; }
+    .energy-grid strong {
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .history-card {
+      margin-top: 14px;
+      padding: 10px 11px;
+      border: 1px solid rgba(90, 171, 255, 0.14);
+      border-radius: 10px;
+      background: rgba(90, 171, 255, 0.035);
+    }
+    .history-card .readout-title { margin-top: 0; }
+    .history-items {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 126px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(133, 169, 191, 0.22) transparent;
+    }
+    .history-items::-webkit-scrollbar { width: 4px; }
+    .history-items::-webkit-scrollbar-thumb { background: rgba(133, 169, 191, 0.22); border-radius: 10px; }
+    .history-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 2px 6px;
+      min-height: 17px;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 8.5px;
+      white-space: nowrap;
+    }
+    .history-item i {
+      width: 5px;
+      height: 5px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 6px rgba(90, 171, 255, 0.55);
+    }
+    .history-item .h-phi { color: #9cd0ff; }
+    .history-item .h-beta { flex-basis: calc(100% - 11px); margin-left: 11px; color: #8fa8ba; }
+    .history-item .h-points { margin-left: auto; color: #617789; font-size: 8px; }
+    .history-empty {
+      color: var(--faint);
+      font-size: 9px;
+      line-height: 1.45;
+    }
+    .legend { margin-top: 14px; }
+    .legend-title {
+      margin-bottom: 8px;
+      color: var(--faint);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 9px;
+    }
+    .legend-grid span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--faint);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+    .legend-grid i {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 0 7px color-mix(in srgb, var(--c) 45%, transparent);
+      border: 1px solid color-mix(in srgb, var(--c) 70%, white 20%);
+    }
+    .convention-note {
+      margin-top: 14px;
+      padding-top: 11px;
+      border-top: 1px solid rgba(142, 174, 198, 0.1);
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 8.5px;
+      line-height: 1.68;
+    }
+    .convention-note b { color: var(--muted); font-family: var(--sans); font-weight: 600; }
+    .text-button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px;
+      background: transparent;
+      border-style: dashed;
+      font-size: 10px;
+    }
+    .version-label {
+      margin-top: 9px;
+      color: rgba(106, 128, 147, 0.65);
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-align: right;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Persistent camera legend / fly HUD / toast                          */
+    /* ------------------------------------------------------------------ */
+    .viewport-note {
+      position: absolute;
+      left: 50%;
+      bottom: 17px;
+      z-index: 6;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border: 1px solid rgba(142, 174, 198, 0.14);
+      border-radius: 999px;
+      background: rgba(5, 14, 23, 0.65);
+      color: var(--faint);
+      font-size: 9.5px;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+    .viewport-note b { color: #b9cfdf; font-weight: 560; }
+    .note-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 8px rgba(90, 171, 255, 0.7);
+    }
+
+    .fly-hud {
+      position: absolute;
+      left: 50%;
+      bottom: 54px;
+      z-index: 20;
+      transform: translateX(-50%);
+      min-width: 360px;
+      max-width: 620px;
+      padding: 12px 14px;
+      border: 1px solid rgba(142, 174, 198, 0.22);
+      border-radius: 11px;
+      background: rgba(6, 17, 27, 0.9);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+      text-align: center;
+    }
+    .fly-hud-title {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .fly-hud p {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.45;
+    }
+    .key-grid {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .key-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--faint);
+      font-size: 9px;
+    }
+    .key-chip kbd {
+      min-width: 18px;
+      padding: 2px 5px;
+      border: 1px solid rgba(142, 174, 198, 0.25);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      background: rgba(16, 33, 48, 0.7);
+      color: #dce9f3;
+      font-family: var(--mono);
+      font-size: 8px;
+      text-align: center;
+    }
+    .fly-hud .ghost-button {
+      height: 26px;
+      margin-top: 9px;
+      padding: 0 10px;
+      font-size: 9px;
+    }
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      z-index: 70;
+      max-width: min(520px, 80vw);
+      padding: 9px 13px;
+      border: 1px solid rgba(142, 174, 198, 0.23);
+      border-radius: 9px;
+      background: rgba(7, 18, 29, 0.96);
+      color: #cfe2ed;
+      font-size: 10.5px;
+      line-height: 1.4;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 8px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+    body.fly-mode .viewport-note { display: none; }
+
+    /* ------------------------------------------------------------------ */
+    /* Modals                                                              */
+    /* ------------------------------------------------------------------ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: rgba(1, 5, 9, 0.72);
+      backdrop-filter: blur(10px);
+    }
+    .modal {
+      position: relative;
+      width: min(860px, 94vw);
+      max-height: min(86vh, 940px);
+      overflow-y: auto;
+      padding: 24px 26px 26px;
+      border: 1px solid rgba(142, 174, 198, 0.22);
+      border-radius: 16px;
+      background:
+        linear-gradient(155deg, rgba(16, 33, 49, 0.98), rgba(7, 17, 27, 0.99) 60%);
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(133, 169, 191, 0.24) transparent;
+    }
+    .modal::-webkit-scrollbar { width: 6px; }
+    .modal::-webkit-scrollbar-thumb { background: rgba(133, 169, 191, 0.24); border-radius: 10px; }
+    .modal h2 {
+      margin: 0 0 5px;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+    }
+    .modal .modal-kicker {
+      margin: 0 0 19px;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+    }
+    .modal h3 {
+      margin: 21px 0 7px;
+      color: #cfe1ec;
+      font-size: 12.5px;
+      font-weight: 620;
+      letter-spacing: 0.02em;
+    }
+    .modal h3:first-of-type { margin-top: 10px; }
+    .modal h4 {
+      margin: 13px 0 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .modal p, .modal li {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.68;
+    }
+    .modal p { margin: 6px 0; }
+    .modal ul, .modal ol { margin: 6px 0; padding-left: 18px; }
+    .modal li { margin: 3px 0; }
+    .modal strong { color: #dfedf6; font-weight: 610; }
+    .modal code {
+      color: #b9d7e9;
+      font-family: var(--mono);
+      font-size: 10px;
+      background: rgba(4, 12, 20, 0.45);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    .modal .formula-block {
+      margin: 9px 0;
+      padding: 10px 12px;
+      overflow-x: auto;
+      border: 1px solid rgba(142, 174, 198, 0.12);
+      border-radius: 8px;
+      background: rgba(3, 10, 16, 0.5);
+      color: #c9dce8;
+      font-family: var(--mono);
+      font-size: 10px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+    .modal .warning-box {
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-left: 2px solid var(--yellow);
+      border-radius: 0 7px 7px 0;
+      background: rgba(255, 209, 102, 0.06);
+      color: #cbbd9f;
+      font-size: 10.5px;
+      line-height: 1.65;
+    }
+    .modal .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(4, 12, 20, 0.5);
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: var(--ink); border-color: var(--line-strong); }
+    .validation-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(5, 14, 23, 0.42);
+    }
+    .validation-summary.success { border-color: rgba(61, 220, 151, 0.25); }
+    .validation-summary.failure { border-color: rgba(255, 98, 108, 0.3); }
+    .validation-score { display: flex; align-items: baseline; gap: 9px; }
+    .validation-score strong {
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .validation-summary.failure .validation-score strong { color: var(--red); }
+    .validation-score span { color: var(--muted); font-size: 11px; }
+    .validation-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px 14px;
+      color: var(--faint);
+      font-size: 9px;
+      text-align: right;
+    }
+    .validation-meta code { font-size: 9px; }
+    .validation-groups {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .validation-group {
+      padding: 10px 11px;
+      border: 1px solid rgba(142, 174, 198, 0.13);
+      border-radius: 8px;
+      background: rgba(5, 14, 23, 0.3);
+    }
+    .validation-group-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .validation-group-head strong { color: #d2e4ee; font-size: 10.5px; font-weight: 600; }
+    .validation-group-head span { color: var(--green); font-family: var(--mono); font-size: 8.5px; }
+    .validation-group.bad .validation-group-head span { color: var(--red); }
+    .validation-group p { margin: 5px 0 7px; color: var(--faint); font-size: 9.5px; line-height: 1.5; }
+    .validation-group-foot { color: var(--faint); font-family: var(--mono); font-size: 8px; }
+    .check-details {
+      margin: 7px 0;
+      border: 1px solid rgba(142, 174, 198, 0.1);
+      border-radius: 7px;
+      background: rgba(4, 11, 18, 0.26);
+    }
+    .check-details summary {
+      padding: 8px 10px;
+      color: var(--muted);
+      font-size: 9.5px;
+      cursor: pointer;
+    }
+    .check-details ul { margin: 0 0 8px; padding: 0 10px; list-style: none; }
+    .check-details li {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 3px 0;
+      color: var(--faint);
+      font-size: 9px;
+      line-height: 1.4;
+    }
+    .check-details li span { color: var(--green); font-family: var(--mono); font-size: 8px; flex: 0 0 30px; }
+    .check-details li.bad span { color: var(--red); }
+    .check-details li code { margin-left: auto; color: #91aabd; font-size: 8px; background: transparent; }
+    .example-box {
+      margin: 14px 0;
+      padding: 11px 13px;
+      border: 1px solid rgba(90, 171, 255, 0.16);
+      border-radius: 8px;
+      background: rgba(90, 171, 255, 0.045);
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.65;
+    }
+    .example-box b { color: #cfe4f6; }
+    .validation-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .validation-actions .ghost-button { height: 31px; padding: 0 13px; font-size: 10px; }
+    .equation { font-family: var(--mono); color: #c9dce8; }
+
+    /* ------------------------------------------------------------------ */
+    /* Loading / fatal                                                     */
+    /* ------------------------------------------------------------------ */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(650px 520px at 50% 44%, rgba(22, 58, 81, 0.5), transparent 72%),
+        #040a11;
+      transition: opacity 300ms ease, visibility 300ms ease;
+    }
+    .loading-overlay.hidden { opacity: 0; visibility: hidden; }
+    .loading-card { display: flex; flex-direction: column; align-items: center; gap: 13px; }
+    .spinner {
+      width: 27px;
+      height: 27px;
+      border: 1.5px solid rgba(142, 174, 198, 0.16);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 850ms linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title {
+      color: #d4e6f1;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+    }
+    .loading-subtitle { color: var(--faint); font-size: 9px; letter-spacing: 0.03em; }
+    .fatal-error {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(3, 8, 13, 0.95);
+    }
+    .fatal-card {
+      width: min(560px, 94vw);
+      padding: 22px;
+      border: 1px solid rgba(255, 98, 108, 0.3);
+      border-radius: 14px;
+      background: rgba(18, 26, 36, 0.96);
+    }
+    .fatal-card h2 { margin: 0 0 8px; color: #ffc0c4; font-size: 17px; }
+    .fatal-card p { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; line-height: 1.65; }
+    .fatal-message {
+      padding: 10px;
+      border-left: 2px solid var(--red);
+      background: rgba(255, 98, 108, 0.055);
+      color: #e2b7ba;
+      font-family: var(--mono);
+      font-size: 10px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .fatal-card button {
+      margin-top: 13px;
+      height: 32px;
+      padding: 0 14px;
+      border: 1px solid rgba(255, 98, 108, 0.3);
+      border-radius: 8px;
+      background: rgba(255, 98, 108, 0.08);
+      color: #ffd1d4;
+      cursor: pointer;
+    }
+    noscript { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; background: #040a11; color: #eee; font-family: sans-serif; }
+
+    /* ------------------------------------------------------------------ */
+    /* Responsive                                                          */
+    /* ------------------------------------------------------------------ */
+    @media (max-width: 1280px) {
+      .controls-panel { width: 314px; left: 16px; }
+      .readout-panel { width: 278px; right: 16px; }
+      .topbar { padding-left: 16px; padding-right: 16px; }
+      .brand p { max-width: 620px; }
+    }
+    @media (max-width: 1120px) {
+      .readout-panel { display: none; }
+      .controls-panel { top: 92px; bottom: 16px; }
+      .brand p { max-width: 560px; }
+    }
+    @media (max-width: 820px) {
+      .topbar { padding: 13px 13px 10px; gap: 10px; }
+      .brand h1 { font-size: 16px; }
+      .brand p { display: none; }
+      .eyebrow { font-size: 8px; margin-bottom: 4px; }
+      .top-actions { gap: 5px; }
+      .top-actions .ghost-button:not(.icon-button) { display: none; }
+      .badge { font-size: 9px; height: 28px; padding: 0 8px; }
+      .controls-panel { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: 46vh; border-radius: 12px; }
+      .viewport-note { bottom: auto; top: 76px; }
+      .modal { padding: 18px; }
+      .modal .two-col, .validation-groups { grid-template-columns: 1fr; }
+      .validation-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .validation-meta { justify-content: flex-start; text-align: left; }
+      .fly-hud { min-width: 0; width: calc(100vw - 20px); bottom: 48vh; }
+    }
+    @media (max-height: 760px) and (min-width: 821px) {
+      .panel { top: 88px; bottom: 12px; }
+      .control-section { padding: 10px 0; }
+      .section-title { margin-bottom: 7px; }
+      .brand p { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+    .top-actions .language-button { display: inline-flex !important; flex-shrink: 0; }
+    html[lang="en"] .brand h1 { font-size: clamp(14px, 1.5vw, 21px); }
+    html[lang="en"] .toggle-row { flex-wrap: wrap; }
+    html[lang="en"] .scene-label .label-sub { margin-left: 4px; }
+    html[lang="en"] .history-item .h-beta { white-space: normal; overflow-wrap: anywhere; }
+
+    /* ================================================================== */
+    /* Presentation typography — large projection defaults                */
+    /* ================================================================== */
+    :root {
+      --type-scale: 1;
+      --fs-2xs: calc(11px * var(--type-scale));
+      --fs-xs: calc(13.5px * var(--type-scale));
+      --fs-sm: calc(15px * var(--type-scale));
+      --fs-body: calc(17px * var(--type-scale));
+      --fs-md: calc(18.5px * var(--type-scale));
+      --fs-lg: calc(21px * var(--type-scale));
+      --fs-value: calc(32px * var(--type-scale));
+      --fs-title: calc(34px * var(--type-scale));
+      --panel-left: 380px;
+      --panel-right: 344px;
+      --panel-top: 124px;
+    }
+    html[data-font-size="standard"] { --type-scale: 0.88; }
+    html[data-font-size="large"] { --type-scale: 1; }
+    html[data-font-size="xlarge"] { --type-scale: 1.16; }
+
+    body { font-size: var(--fs-body); }
+    .topbar { padding: 20px 24px 16px; }
+    .eyebrow { margin-bottom: 8px; font-size: var(--fs-xs); letter-spacing: 0.14em; }
+    .brand { max-width: min(72vw, 1080px); }
+    .brand h1 { max-width: min(72vw, 1000px); font-size: var(--fs-title); line-height: 1.16; }
+    .brand p { margin-top: 8px; font-size: var(--fs-body); }
+    .top-actions { gap: 9px; }
+    .top-actions .ghost-button { height: 40px; padding: 0 14px; font-size: var(--fs-sm); }
+    .badge { height: 40px; padding: 0 14px; font-size: var(--fs-sm); }
+    .icon-button { width: 42px; font-size: 19px !important; }
+
+    .panel { top: var(--panel-top); bottom: 22px; }
+    .controls-panel { left: 22px; width: var(--panel-left); padding: 18px 18px 0; }
+    .readout-panel { right: 22px; width: var(--panel-right); padding: 18px; }
+    .panel-head { padding-bottom: 14px; font-size: var(--fs-md); }
+    .panel-kicker { font-size: var(--fs-2xs); letter-spacing: 0.14em; }
+    .control-section { padding: 16px 0; }
+    .section-title { margin-bottom: 12px; font-size: var(--fs-md); }
+    .section-title .symbol { font-size: var(--fs-xs); }
+    .value-readout { font-size: var(--fs-value); line-height: 1.1; }
+    .value-blue { color: var(--blue); }
+    input[type="number"] { width: 96px; height: 38px; padding: 0 10px; font-size: var(--fs-body); }
+    input[type="range"] { height: 28px; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 5px; }
+    input[type="range"]::-moz-range-track { height: 5px; }
+    input[type="range"]::-webkit-slider-thumb { width: 19px; height: 19px; margin-top: -7px; }
+    input[type="range"]::-moz-range-thumb { width: 17px; height: 17px; }
+    .range-scale { margin-top: 6px; font-size: var(--fs-xs); }
+    .hint { margin-top: 9px; font-size: var(--fs-sm); line-height: 1.5; }
+    .hint-critical { color: var(--muted); }
+    .hint-critical strong { color: var(--yellow); }
+    .inline-row { gap: 10px; margin-top: 14px; }
+    .primary-button { height: 44px; font-size: var(--fs-body); }
+    .button-glyph { font-size: 11px; }
+    .speed-control { font-size: var(--fs-xs); }
+    .speed-control output { font-size: var(--fs-sm); }
+    .segmented { gap: 4px; padding: 4px; }
+    .segment { height: 38px; font-size: var(--fs-sm); }
+    .font-size-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .font-size-row .row-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: var(--fs-xs);
+      white-space: nowrap;
+    }
+    .font-segmented { flex: 1; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .font-segmented .segment { height: 32px; padding: 0 3px; font-size: var(--fs-xs); }
+    .toggle-grid { gap: 9px 8px; }
+    .toggle { min-height: 30px; gap: 9px; font-size: var(--fs-sm); }
+    .toggle .switch { width: 32px; height: 18px; }
+    .toggle .switch::after { width: 12px; height: 12px; }
+    .toggle input:checked + .switch::after { transform: translateX(14px); }
+    .action-row { gap: 10px; margin-top: 16px; }
+    .danger-button, .action-row .ghost-button { height: 40px; font-size: var(--fs-sm); }
+    .panel-footer { display: none; }
+    .panel-disclosure {
+      margin: 4px -18px 0;
+      padding: 12px 18px 16px;
+      border-top: 1px solid rgba(142, 174, 198, 0.1);
+      background: rgba(3, 10, 16, 0.3);
+      color: var(--faint);
+      font-size: var(--fs-sm);
+      line-height: 1.55;
+    }
+    .panel-disclosure summary {
+      color: var(--muted);
+      font-size: var(--fs-sm);
+      cursor: pointer;
+      list-style-position: outside;
+    }
+    .panel-disclosure p { margin: 8px 0 0; }
+    .panel-disclosure b { color: var(--ink); }
+
+    .readout-block { padding-top: 12px; }
+    .readout-title { margin: 14px 0 6px; font-size: var(--fs-xs); }
+    .readout-row { min-height: 28px; font-size: var(--fs-sm); }
+    .readout-row code { font-size: var(--fs-sm); }
+    .readout-row sub { font-size: 9px; }
+    .divider { margin: 13px 0; }
+    .formula-mini { margin-top: 9px; font-size: var(--fs-sm); line-height: 1.6; }
+    .formula-mini .katex { font-size: 1.35em; }
+    .formula-mini.math-display .katex { font-size: 1.1em; }
+    .energy-card { margin-top: 16px; padding: 13px 12px 12px; }
+    .energy-grid { gap: 9px; margin-top: 10px; }
+    .energy-grid div { padding: 9px 10px; }
+    .energy-grid span { font-size: var(--fs-sm); }
+    .energy-grid strong { font-size: var(--fs-lg); white-space: nowrap; }
+    .history-card { margin-top: 16px; padding: 12px 12px 11px; }
+    .history-items { max-height: 138px; gap: 6px; }
+    .history-item { min-height: 20px; gap: 3px 6px; font-size: var(--fs-xs); }
+    .history-item .h-points { font-size: var(--fs-2xs); }
+    .history-empty { font-size: var(--fs-sm); }
+    .legend { margin-top: 16px; }
+    .legend-title { margin-bottom: 9px; font-size: var(--fs-xs); }
+    .legend-grid { gap: 8px 9px; }
+    .legend-grid span { font-size: var(--fs-sm); gap: 7px; }
+    .legend-grid i { width: 9px; height: 9px; }
+    .convention-note { margin-top: 16px; font-size: var(--fs-sm); line-height: 1.65; }
+    .text-button { margin-top: 14px; padding: 10px; font-size: var(--fs-sm); }
+    .version-label { font-size: var(--fs-2xs); }
+
+    /* Scene labels need to remain readable in the projected image. */
+    .scene-label {
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: calc(16.5px * var(--type-scale));
+    }
+    .label-main { font-size: calc(19px * var(--type-scale)); }
+    .label-main i { font-size: calc(21px * var(--type-scale)); }
+    .label-main sub { font-size: calc(12.5px * var(--type-scale)); }
+    .label-sub { font-size: calc(14px * var(--type-scale)); }
+    .label-a .label-main { font-size: calc(21px * var(--type-scale)); }
+    .label-angle { padding: 3px 8px; font-size: calc(17px * var(--type-scale)); }
+    .label-axis, .label-axis .label-main { font-size: calc(17px * var(--type-scale)); }
+    .label-minus-z .label-sub { font-size: calc(13px * var(--type-scale)); }
+
+    .viewport-note { bottom: 18px; padding: 8px 14px; font-size: var(--fs-sm); }
+    .fly-hud { bottom: 68px; min-width: 430px; padding: 14px 18px; }
+    .fly-hud-title { font-size: var(--fs-sm); }
+    .fly-hud p { font-size: var(--fs-sm); }
+    .key-grid { gap: 8px; }
+    .key-chip { font-size: var(--fs-xs); }
+    .key-chip kbd { min-width: 24px; padding: 3px 6px; font-size: var(--fs-2xs); }
+    .fly-hud .ghost-button { height: 32px; font-size: var(--fs-xs); }
+    .toast { bottom: 62px; padding: 11px 16px; font-size: var(--fs-body); }
+
+    .modal-backdrop { padding: 22px; }
+    .modal {
+      width: min(1040px, 94vw);
+      max-height: min(90vh, 1040px);
+      padding: 28px 32px 30px;
+    }
+    .modal h2 { font-size: calc(30px * var(--type-scale)); }
+    .modal .modal-kicker { margin-bottom: 21px; font-size: var(--fs-xs); }
+    .modal h3 { margin: 24px 0 9px; font-size: calc(21px * var(--type-scale)); }
+    .modal h4 { margin: 16px 0 6px; font-size: calc(17px * var(--type-scale)); }
+    .modal p, .modal li { font-size: calc(16px * var(--type-scale)); line-height: 1.68; }
+    .modal ul, .modal ol { padding-left: 22px; }
+    .modal code { font-size: calc(14px * var(--type-scale)); }
+    .modal .formula-block {
+      margin: 12px 0;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: calc(20px * var(--type-scale));
+      line-height: 1.65;
+    }
+    .modal .warning-box { font-size: calc(15px * var(--type-scale)); line-height: 1.65; }
+    .modal-close { top: 16px; right: 18px; width: 40px; height: 40px; font-size: 23px; }
+    .validation-score strong { font-size: calc(34px * var(--type-scale)); }
+    .validation-score span { font-size: var(--fs-body); }
+    .validation-meta { gap: 5px 16px; font-size: var(--fs-xs); }
+    .validation-meta code { font-size: var(--fs-xs); }
+    .validation-group { padding: 12px 13px; }
+    .validation-group-head strong { font-size: var(--fs-sm); }
+    .validation-group-head span { font-size: var(--fs-2xs); }
+    .validation-group p { font-size: var(--fs-xs); }
+    .validation-group-foot { font-size: var(--fs-2xs); }
+    .check-details summary { padding: 10px 12px; font-size: var(--fs-xs); }
+    .check-details li { font-size: var(--fs-xs); }
+    .check-details li span { font-size: var(--fs-2xs); }
+    .check-details li code { font-size: var(--fs-2xs); }
+    .example-box { font-size: var(--fs-sm); }
+    .validation-actions .ghost-button { height: 38px; padding: 0 15px; font-size: var(--fs-xs); }
+
+    .loading-title { font-size: 14px; }
+    .loading-subtitle { font-size: 12px; }
+    .fatal-card h2 { font-size: calc(22px * var(--type-scale)); }
+    .fatal-card p { font-size: var(--fs-body); }
+    .fatal-message { font-size: var(--fs-sm); }
+    .fatal-card button { height: 38px; font-size: var(--fs-sm); }
+
+    @media (max-width: 1700px) {
+      :root { --panel-left: 350px; --panel-right: 322px; --panel-top: 116px; }
+      .controls-panel { left: 16px; }
+      .readout-panel { right: 16px; }
+      .topbar { padding-left: 16px; padding-right: 16px; }
+    }
+    @media (max-width: 1500px) {
+      .brand p { display: none; }
+      .formula-mini.math-display .katex { font-size: 1em; }
+      #validation-open { display: none; }
+      :root { --panel-top: 108px; --panel-left: 338px; --panel-right: 310px; }
+      .top-actions .ghost-button { height: 36px; padding: 0 11px; }
+      .badge { height: 36px; padding: 0 11px; }
+      .brand { max-width: calc(100vw - 390px); }
+      .brand h1 { max-width: calc(100vw - 410px); }
+    }
+    @media (max-height: 840px) {
+      :root { --panel-top: 92px; }
+      .topbar { padding-top: 12px; padding-bottom: 10px; }
+      .brand p { display: none; }
+      .eyebrow { margin-bottom: 4px; }
+      .brand h1 { font-size: calc(28px * var(--type-scale)); }
+      .panel { bottom: 10px; }
+      .control-section { padding: 13px 0; }
+      .modals .modal { max-height: 92vh; }
+    }
+    @media (max-width: 1120px) {
+      :root { --panel-top: 118px; }
+      .readout-panel { display: none; }
+      .controls-panel { top: var(--panel-top); bottom: 12px; }
+      .brand h1 { font-size: calc(23px * var(--type-scale)); max-width: calc(100vw - 300px); }
+      .viewport-note { display: none; }
+      .modal .formula-block { font-size: calc(17px * var(--type-scale)); }
+    }
+    @media (max-width: 820px) {
+      .top-actions { gap: 5px; }
+      .top-actions .ghost-button:not(.icon-button) { display: none; }
+      .top-actions .language-button { display: inline-flex !important; }
+      .badge { display: none; }
+      .controls-panel { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: 46vh; }
+      .viewport-note { top: 76px; bottom: auto; }
+      .modal { padding: 18px; }
+      .modal .two-col, .validation-groups { grid-template-columns: 1fr; }
+      .validation-summary { align-items: flex-start; flex-direction: column; }
+      .fly-hud { min-width: 0; width: calc(100vw - 20px); bottom: 48vh; }
+    }
+
+
+    /* ------------------------------------------------------------------ */
+    /* KaTeX display / inline math                                         */
+    /* ------------------------------------------------------------------ */
+    .formula-block {
+      color: var(--ink);
+      border: 1px solid rgba(142, 174, 198, 0.14);
+      border-radius: 10px;
+      background: rgba(3, 11, 18, 0.46);
+      padding: 16px 18px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .formula-block .katex-display { margin: 0.25em 0; text-align: left; }
+    .formula-block .katex-display > .katex { text-align: left; }
+    .formula-block .katex { font-size: 1em; }
+    .formula-caption {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: calc(14.5px * var(--type-scale));
+      line-height: 1.6;
+    }
+    .formula-caption .katex { font-size: 1.02em; }
+    .formula-mini .katex { font-size: 1.35em; }
+    .formula-mini .formula-text {
+      display: inline-block;
+      margin-left: 0.35em;
+      color: var(--faint);
+    }
+    .formula-mini.math-display {
+      margin-top: 9px;
+      overflow-x: auto;
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+    .formula-mini.math-display .katex-display { margin: 0.2em 0; text-align: left; }
+    .formula-mini.math-display .katex { font-size: 1.1em; }
+    .math-inline { white-space: nowrap; }
+    .math-error {
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 0.8em;
+    }
+    details.convention-note {
+      margin-top: 16px;
+      padding-top: 11px;
+      border-top: 1px solid rgba(142, 174, 198, 0.1);
+      color: var(--faint);
+      font-family: var(--sans);
+      font-size: var(--fs-sm);
+      line-height: 1.65;
+    }
+    details.convention-note summary {
+      color: var(--muted);
+      cursor: pointer;
+      list-style-position: outside;
+    }
+    details.convention-note[open] summary { margin-bottom: 8px; }
+    details.convention-note .katex-display { margin: 0.35em 0; text-align: left; }
+    details.convention-note .katex { font-size: 1em; }
+    .inline-help {
+      margin: 8px 0 0;
+      padding: 9px 11px;
+      border-left: 2px solid rgba(90, 171, 255, 0.28);
+      border-radius: 0 7px 7px 0;
+      background: rgba(90, 171, 255, 0.045);
+      color: var(--muted);
+      font-size: var(--fs-sm);
+      line-height: 1.55;
+    }
+
+
+    .narrow-only { display: none !important; }
+    @media (max-width: 1120px) {
+      #readout-toggle { display: inline-flex !important; }
+      body.show-readout .readout-panel {
+        display: block;
+        position: fixed;
+        top: 118px;
+        right: 12px;
+        bottom: 12px;
+        width: min(360px, calc(100vw - 24px));
+        z-index: 35;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+      }
+      body.show-readout::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 34;
+        background: rgba(2, 8, 13, 0.42);
+        pointer-events: none;
+      }
+    }
+    @media (max-width: 820px) {
+      #readout-toggle { display: none !important; }
+      body.show-readout .readout-panel { display: none !important; }
+      body.show-readout::after { display: none; }
+    }
+
+    @media (max-width: 1500px) {
+      .formula-mini.math-display .katex { font-size: 0.88em; }
+      details.convention-note .formula-mini.math-display .katex { font-size: 0.82em; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="viewport" aria-label="三维 Compton 几何视口">
+      <div id="scene-labels" aria-hidden="true"></div>
+    </div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="eyebrow">COMPTON TELESCOPE · REAL-SPACE GEOMETRY</div>
+        <h1>Compton 事件锥 · 绕源轴旋转与反投影轴轨迹</h1>
+        <p>固定源方向 S · 固定散射角 φ · β 绕 O—S 旋转真实 event cone，蓝色记录的是 A 而不是平面圆心 B</p>
+      </div>
+      <div class="top-actions">
+        <button id="validation-badge" class="badge" type="button" title="页面内数学自检结果">数学自检 · 运行中</button>
+        <button id="help-open" class="ghost-button" type="button">说明 / 约定</button>
+        <button id="readout-toggle" class="ghost-button narrow-only" type="button" aria-pressed="false">读数</button>
+        <button id="validation-open" class="ghost-button" type="button">数学自检</button>
+        <button id="fullscreen-button" class="ghost-button icon-button" type="button" title="全屏">⛶</button>
+      </div>
+    </header>
+
+    <aside class="panel controls-panel" id="controls-panel" aria-label="实验控制">
+      <div class="panel-head"><span>实验控制</span><span class="panel-kicker">PHYSICS / VIEW</span></div>
+
+      <section class="control-section camera-section">
+        <div class="section-title">观察相机 <span class="symbol">不影响物理</span></div>
+        <div class="segmented" role="group" aria-label="相机模式">
+          <button id="mode-orbit" class="segment is-active" type="button" aria-pressed="true" data-camera-mode="orbit">轨道观察</button>
+          <button id="mode-fly" class="segment" type="button" aria-pressed="false" data-camera-mode="fly">自由观察</button>
+        </div>
+        <div class="font-size-row">
+          <span class="row-label">投影字号</span>
+          <div class="segmented font-segmented" role="group" aria-label="投影字号">
+            <button id="font-size-standard" class="segment" type="button" data-font-size="standard" aria-pressed="false">标准</button>
+            <button id="font-size-large" class="segment is-active" type="button" data-font-size="large" aria-pressed="true">大字</button>
+            <button id="font-size-xlarge" class="segment" type="button" data-font-size="xlarge" aria-pressed="false">特大</button>
+          </div>
+        </div>
+        <p class="hint" id="camera-hint" hidden>左键拖动旋转 · 右键或 Shift+拖动平移 · 滚轮缩放</p>
+      </section>
+
+      <section class="control-section">
+        <div class="section-title">散射角 φ <span class="symbol">Compton angle</span></div>
+        <div class="control-row">
+          <output id="phi-value" class="value-readout">35.0°</output>
+          <input id="phi-number" type="number" min="0" max="180" step="0.1" value="35" aria-label="φ 数字输入，单位度" />
+        </div>
+        <input id="phi-range" type="range" min="0" max="180" step="0.1" value="35" aria-label="φ 滑块，单位度" />
+        <div class="range-scale"><span>0°</span><span>90°</span><span>180°</span></div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-title">绕源方向旋转 β <span class="symbol">about O—S</span></div>
+        <div class="control-row">
+          <output id="beta-value" class="value-readout value-blue">0.0°</output>
+          <input id="beta-number" type="number" min="0" max="360" step="0.1" value="0" aria-label="β 数字输入，单位度" />
+        </div>
+        <input id="beta-range" type="range" min="0" max="360" step="0.1" value="0" aria-label="β 滑块，单位度" />
+        <div class="range-scale"><span>0°</span><span>180°</span><span>360°</span></div>
+        <div class="inline-row">
+          <button id="auto-toggle" class="primary-button" type="button" aria-pressed="false"><span class="button-glyph">▶</span> 开始自动旋转</button>
+          <label class="speed-control" for="speed-range">速度 <output id="speed-value">25°/s</output><input id="speed-range" type="range" min="1" max="90" step="1" value="25" aria-label="自动旋转速度" /></label>
+        </div>
+        <p class="hint hint-critical"><strong>β ≠ ψ</strong> · 鼠标只改变观察视角</p>
+      </section>
+
+      <section class="control-section">
+        <div class="section-title">痕迹与场景 <span class="symbol">display only</span></div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="toggle-history" type="checkbox" checked /><span class="switch"></span><span>历史轨迹</span></label>
+          <label class="toggle"><input id="toggle-sky" type="checkbox" checked /><span class="switch"></span><span>天空球</span></label>
+          <label class="toggle"><input id="toggle-angle-aids" type="checkbox" /><span class="switch"></span><span>角度辅助</span></label>
+          <label class="toggle"><input id="toggle-theory" type="checkbox" /><span class="switch"></span><span>理论小圆</span></label>
+          <label class="toggle"><input id="toggle-b" type="checkbox" /><span class="switch"></span><span>平面圆心 B</span></label>
+        </div>
+        <div class="action-row">
+          <button id="clear-trails" class="danger-button" type="button">清空轨迹</button>
+          <button id="reset-view" class="ghost-button" type="button">重置视角</button>
+        </div>
+      </section>
+
+      <details class="panel-disclosure">
+        <summary>操作与轨迹规则</summary>
+        <p><b>鼠标 ≠ β。</b> 相机与物理状态独立；改变视角、缩放、暂停、开关显示或重置视角都不会删除历史轨迹。只有“清空轨迹”删除历史，而且不会重置 φ、β 或相机。</p>
+        <p>自由观察需要明确点击进入；Esc 返回轨道观察。详细约定见右上角“说明 / 约定”。</p>
+      </details>
+    </aside>
+
+    <aside class="panel readout-panel" id="readout-panel" aria-label="实时物理读数">
+      <div class="panel-head"><span>瞬时几何</span><span class="panel-kicker">LIVE</span></div>
+      <div class="readout-block">
+        <div class="readout-row"><span>固定源 S</span><code>χ₀ 145° · ψ₀ 35°</code></div>
+        <div class="readout-row"><span>β 显示 / 累计</span><code id="readout-beta">0.0° / 累计 0.0°</code></div>
+        <div class="readout-row"><span>散射角 φ</span><code id="readout-phi">35.0°</code></div>
+        <div class="divider"></div>
+        <div class="readout-title">散射后传播方向 k</div>
+        <div class="readout-row"><span>χ<sub>k</sub></span><code id="readout-chi-k">—</code></div>
+        <div class="readout-row"><span>ψ<sub>k</sub></span><code id="readout-psi-k">—</code></div>
+        <div class="readout-title">反投影轴 a = −k</div>
+        <div class="readout-row"><span>χ<sub>a</sub></span><code id="readout-chi-a">—</code></div>
+        <div class="readout-row"><span>ψ<sub>a</sub></span><code id="readout-psi-a">—</code></div>
+        <p class="formula-mini">
+          <span class="math-inline" data-tex="\chi_a=180^\circ-\chi_k"></span>
+          <span class="formula-text">·</span>
+          <span class="math-inline" data-tex="\psi_a=\psi_k+180^\circ"></span>
+          <span class="formula-text">χ、ψ 描述 k，不描述 a</span>
+        </p>
+        <div class="divider"></div>
+        <div class="readout-row"><span>event circle</span><code id="readout-circle-state">小圆 · 数学上经过 S</code></div>
+        <div class="readout-row"><span>记录点</span><code class="blue-code" id="readout-a-definition">A = O + R a</code></div>
+      </div>
+
+      <div class="energy-card">
+        <div class="readout-title">Compton 能量示例 <span>E = 1000 keV</span></div>
+        <div class="energy-grid">
+          <div><span>散射后 E′</span><strong id="energy-scattered">738.5 keV</strong></div>
+          <div><span>反冲电子 Tₑ</span><strong id="energy-recoil">261.5 keV</strong></div>
+        </div>
+        <div class="formula-mini math-display" data-display="true" data-tex="\begin{aligned}E'&amp;=\frac{E}{1+(E/m_e c^2)(1-\cos\varphi)},\\[2pt]m_e c^2&amp;=510.999\ \mathrm{keV}\end{aligned}"></div>
+      </div>
+
+      <div class="history-card">
+        <div class="readout-title">会话轨迹 <span id="history-count">0 段</span></div>
+        <div id="history-items" class="history-items">
+          <div class="history-empty">转动 β 后开始记录。</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title">图例</div>
+        <div class="legend-grid">
+          <span><i style="--c:var(--source)"></i>S 固定源</span>
+          <span><i style="--c:var(--green)"></i>O—S 源轴</span>
+          <span><i style="--c:var(--red)"></i>event cone / circle</span>
+          <span><i style="--c:var(--blue)"></i>A / 历史轨迹</span>
+          <span><i style="--c:var(--cyan)"></i>k（散射后）</span>
+          <span><i style="--c:var(--orange)"></i>n<sub>in</sub>（入射）</span>
+          <span><i style="--c:var(--violet)"></i>χ / ψ 辅助弧</span>
+        </div>
+      </div>
+
+      <details class="convention-note">
+        <summary>本页角度约定 · χ 从 −z；ψ 从 +y 朝 +x</summary>
+        <div class="formula-mini math-display" data-display="true" data-tex="\begin{aligned}\mathbf d(\chi,\psi)&amp;=\bigl(\sin\chi\sin\psi,\ \sin\chi\cos\psi,\\&amp;\quad -\cos\chi\bigr)\end{aligned}"></div>
+        <p>R = 1.6 是天空方向球的显示尺度，不是源的真实距离。</p>
+      </details>
+      <button id="help-open-secondary" class="text-button" type="button">查看完整假设与角度约定 →</button>
+      <div id="version-label" class="version-label">v1.0 · real-space geometry</div>
+    </aside>
+
+    <div class="viewport-note"><span class="note-dot"></span><b>β 控件旋转 event cone</b> · 拖动鼠标只改变观察视角</div>
+
+    <div id="fly-hud" class="fly-hud" hidden>
+      <div class="fly-hud-title"><span class="note-dot"></span>自由观察模式</div>
+      <p id="fly-lock-state">点击画面可锁定鼠标；未锁定时可直接拖动画面转向</p>
+      <div class="key-grid">
+        <span class="key-chip"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 水平移动</span>
+        <span class="key-chip"><kbd>Q</kbd><kbd>E</kbd> 下降 / 上升</span>
+        <span class="key-chip"><kbd>Shift</kbd> 加速</span>
+        <span class="key-chip"><kbd>Esc</kbd> 退出</span>
+      </div>
+      <button id="fly-exit" class="ghost-button" type="button">退出自由观察，返回轨道视角</button>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div id="help-modal" class="modal-backdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <button class="modal-close" type="button" data-close-modal aria-label="关闭">×</button>
+        <h2 id="help-title">操作、角度约定与物理假设</h2>
+        <p class="modal-kicker">COMPTON   REAL-SPACE   CONE   ·   REFERENCE   NOTES</p>
+
+        <h3>1. 这个交互在展示什么</h3>
+        <p>场景中有一个公共原点 <strong>O</strong>、以 O 为球心、半径 R 的天空方向球，以及固定源方向 <strong>S</strong>。红色的 <strong>真实 event cone</strong> 顶点在 O；它的轴是反投影轴 <strong>a</strong>；与方向球相交得到红色 <strong>event circle</strong>。无论 β 怎样旋转，event circle 都经过固定的源标记 S。</p>
+        <p>蓝色标记 <strong>A</strong> 是反投影轴 a 在方向球上的端点 <em>O + R a</em>，也是 event circle 的球面角中心。蓝色历史线记录的是 A 的轨迹，不是 event circle 所在平面的欧氏圆心 B。</p>
+        <div class="warning-box"><strong>文字含义边界：</strong> 本页把 O 当作当前示例事件的第一次相互作用位置；比较不同事件时，O 只是把不同方向向量平移到一起后的公共方向原点。真实观测中，不同光子的第一次相互作用位置并不相同。event circle 是一次事件允许的候选源方向集合，不是实际发射光子的圆环。旋转动画表示生成一族“同源方向、同 φ、不同散射方位”的可能事件，不表示一个已经测量完成的光子事件在探测器中旋转。</div>
+
+        <h3>2. 本页实际采用的角度约定</h3>
+        <p>使用右手物理坐标系 x、y、z。χ 从 <strong>−z</strong> 方向量起，范围 0°–180°；ψ 是 xy 平面方位角，从 <strong>+y 朝 +x</strong> 增大，范围 0°–360°。所有计算内部使用弧度，界面显示角度。</p>
+        <div class="formula-block" data-display="true" data-tex="\begin{aligned}
+\mathbf d(\chi,\psi) &amp;= (\sin\chi\sin\psi,\ \sin\chi\cos\psi,\ -\cos\chi)\\[2pt]
+\chi &amp;= \arccos\!\left(\operatorname{clamp}(-d_z,-1,1)\right)\\
+\psi &amp;= \operatorname{wrap}_{[0,2\pi)}\!\left(\operatorname{atan2}(d_x,d_y)\right)
+\end{aligned}">d(χ, ψ) = (sinχ sinψ, sinχ cosψ, −cosχ)</div>
+        <p>在 χ = 0° 或 180° 的极点，ψ 没有唯一物理定义；界面显示“未定义（极点）”，不会让数值抖动或产生 NaN。参考图没有完全确定 ψ 的零方位，因此“从 +y 朝 +x”是本实现明确采用的选择，而不是声称所有 Compton 文献都采用它。</p>
+        <p>本页公式使用离线 KaTeX（LaTeX 排版）渲染，所需字体已内嵌在单文件中，不加载网络资源。</p>
+
+        <h3>3. 源方向、入射方向、散射方向与反投影轴</h3>
+        <p>s₀ 是从 O 指向源的固定单位向量；S = O + R s₀。入射光子传播方向与源方向相反：n<sub>in</sub> = −s₀。散射后光子的单位传播方向记为 k；朝天空的反投影轴 a = −k。</p>
+        <div class="formula-block" data-display="true" data-tex="\begin{aligned}
+\cos\varphi &amp;= \mathbf n_{\mathrm{in}}\cdot\mathbf k = (-\mathbf s_0)\cdot\mathbf k = \mathbf s_0\cdot\mathbf a\\[2pt]
+\chi_a &amp;= \pi - \chi_k,\qquad \psi_a = \operatorname{wrap}(\psi_k+\pi)
+\end{aligned}">cosφ = n_in · k = (−s₀) · k = s₀ · a</div>
+        <p>χ、ψ 描述的是 k，不是 a。<br />若显示反投影轴 a 的天空坐标，必须标为 χ_a、ψ_a：</p>
+
+        <h3>4. 真实 event cone 的旋转构造</h3>
+        <p>对固定源方向 s₀，取与 s₀ 垂直的正交单位基底 b₁、b₂，满足 b₂ = s₀ × b₁。β 是绕固定源方向 O—S 的额外旋转参数，不是 ψ。event cone 的反投影轴为：</p>
+        <div class="formula-block" data-display="true" data-tex="\begin{aligned}
+\mathbf a(\varphi,\beta) &amp;= \cos\varphi\,\mathbf s_0 + \sin\varphi\,(\mathbf b_1\cos\beta+\mathbf b_2\sin\beta)\\
+\mathbf k &amp;= -\mathbf a,\qquad |\mathbf a|=1,\qquad \mathbf s_0\cdot\mathbf a=\cos\varphi
+\end{aligned}">a(φ, β) = cosφ · s₀ + sinφ · ( b₁ cosβ + b₂ sinβ )</div>
+        <p>event circle 上的候选源方向 s(t) 满足 |s| = 1、s·a = cosφ。为了在 φ→0° 或 180° 时不除以接近零的 sinφ，构造使用无除法分支：</p>
+        <div class="formula-block" data-display="true" data-tex="\begin{aligned}
+\mathbf u &amp;= \sin\varphi\,\mathbf s_0 - \cos\varphi\,(\mathbf b_1\cos\beta+\mathbf b_2\sin\beta)\\
+\mathbf v &amp;= \mathbf a\times\mathbf u\\
+\mathbf s(t) &amp;= \cos\varphi\,\mathbf a + \sin\varphi\,(\mathbf u\cos t+\mathbf v\sin t),\qquad 0\le t\lt 2\pi\\
+Q(t) &amp;= O + R\,\mathbf s(t)
+\end{aligned}">u = sinφ · s₀ − cosφ · (b₁ cosβ + b₂ sinβ)</div>
+        <p class="formula-caption"><span class="math-inline" data-tex="\mathbf s(0)=\mathbf s_0"></span> ⇒ event circle 精确经过 S</p>
+        <p>真实 event cone 是从 O 沿这些方向延伸 0 ≤ ρ ≤ R 的母线集合，不是固定 45° 的普通 ConeGeometry。红色锥面是半透明的；φ = 90° 时它退化为过 O 的平面盘，而不是有有限高度的普通圆锥。</p>
+
+        <h3>5. A、B 与轨迹的几何事实</h3>
+        <div class="formula-block" data-display="true" data-tex="\begin{aligned}
+\mathbf A &amp;= O + R\,\mathbf a\\
+\mathbf B &amp;= O + R\cos\varphi\,\mathbf a\\
+A &amp;\ne B \quad\text{(generally)}
+\end{aligned}">A = O + R a, B = O + R cosφ · a, A ≠ B</div>
+        <p class="formula-caption">
+          <span class="math-inline" data-tex="A"></span>（天空球上的球面角中心，蓝点）
+          &nbsp;·&nbsp;
+          <span class="math-inline" data-tex="B"></span>（event circle 所在平面内的欧氏圆心，通常位于球内）
+        </p>
+        <p class="formula-caption">A 一般 ≠ B</p>
+        <p>固定 φ 时，A 的完整轨迹是一个平面小圆：平面垂直于 s₀，几何圆心为 O + R cosφ · s₀，欧氏半径为 R sinφ；以 S 为球面角中心时，角半径是 φ。不要把 R sinφ 标成 φ，也不要用弦长冒充球面弧长。沿球面从 S 到 A 的大圆弧中心角为 φ，弧长为 Rφ（φ 用弧度）。</p>
+        <p>“理论小圆”开关只显示当前 φ 的完整理论轨道，使用很淡的虚线，与已经扫过的蓝色历史轨迹明确区分，且可关闭。B 标记默认隐藏，打开时显示“平面圆心 B”。</p>
+
+        <h3>6. 历史轨迹规则</h3>
+        <ul>
+          <li>只显示已经扫过的部分；初始不会预画一整圈实线。</li>
+          <li>轨迹按角度采样，间隔 0.25°，不是只按动画帧率采样；快速拖动 β 时插值补全区间。</li>
+          <li>每段记录自己的 φ、扫过的累计 β、对应单位方向向量和样式。渲染时绝不把旧点重新套用成最新 φ。</li>
+          <li>改变 φ 时先闭合旧段，再开启新段；绝不在不同 φ 的点之间画连线。只改 φ 不会生成新的蓝线。</li>
+          <li>视角变化、缩放、暂停/继续、显示开关、重置视角都不删除历史。只有“清空轨迹”删除历史，而且不会重置 φ、β 或相机。</li>
+          <li>β 内部保留未取模的累计角度，显示时回绕到 0°–360°。β 的绝对数值输入按显示旧值→新值的数值差录制，不做“最短角路径”修正，所以 0°→360° 会留下完整一圈。手动调整数值会暂停自动旋转。</li>
+        </ul>
+
+        <h3>7. Compton 能量关系</h3>
+        <p>给定入射光子能量 E = 1000 keV 的紧凑示例：</p>
+        <div class="formula-block" data-display="true" data-tex="\begin{aligned}
+E' &amp;= \frac{E}{1+\dfrac{E}{m_e c^2}(1-\cos\varphi)}\\[4pt]
+T_e &amp;= E-E',\qquad m_e c^2 \approx 510.999\ \mathrm{keV}
+\end{aligned}">E′ = E / [1 + (E/mₑc²)(1 − cosφ)], Tₑ = E − E′</div>
+        <p>若通过第一次散射的电子能量沉积 Eₑ 和散射后光子的完全吸收能量 E_γ 反算 φ，可使用：</p>
+        <div class="formula-block" data-display="true" data-tex="\cos\varphi = 1 - m_e c^2\left(\frac{1}{E_\gamma}-\frac{1}{E_e+E_\gamma}\right)">cosφ = 1 − mₑc²(1/E_γ − 1/(Eₑ + E_γ))</div>
+        <p>本页同时显示当前 E′ 和 Tₑ。这里的旋转是按 β 均匀生成几何，不是真实探测计数分布；实际事件概率还需 Klein–Nishina 截面、探测器几何、接受度与筛选条件，本版本不模拟这些概率。</p>
+
+        <h3>8. 操作与观察方式</h3>
+        <div class="two-col">
+          <div>
+            <h4>轨道观察（默认）</h4>
+            <ul>
+              <li>左键拖动：绕 O 旋转观察视角</li>
+              <li>右键或 Shift + 拖动：平移观察中心</li>
+              <li>滚轮：缩放</li>
+              <li>可以从上方、侧方、下方观察</li>
+            </ul>
+          </div>
+          <div>
+            <h4>自由观察</h4>
+            <ul>
+              <li>明确点击“自由观察”进入，浏览器会请求 Pointer Lock</li>
+              <li>移动鼠标：改变朝向</li>
+              <li>W/A/S/D：水平移动；Q/E：下降/上升</li>
+              <li>Shift：加速；Esc：退出并回到轨道视角</li>
+              <li>若浏览器未授予 Pointer Lock，可直接拖动画面转向</li>
+            </ul>
+          </div>
+        </div>
+        <p><strong>相机操作不会改变物理参数。</strong> “绕源方向旋转 event cone”与“移动摄像机观察场景”是两种独立操作；旋转视角不会被当成 β。</p>
+        <p><strong>投影字号：</strong> 左侧“投影字号”可在标准 / 大字 / 特大之间切换。1920×1080 建议“大字”；较低分辨率或较远观看距离建议“特大”。长操作说明集中在本弹层，不在主界面常驻。</p>
+        <p>角度辅助默认隐藏，可在左侧打开 φ、χ 和 ψ 辅助弧。</p>
+
+        <h3>9. 简化、范围与限制</h3>
+        <ul>
+          <li>理想化：遥远点源；入射光子在探测器尺度上近似平行；初始电子静止；使用自由电子 Compton 关系。</li>
+          <li>不考虑测量误差、Doppler broadening、背景和探测器接受度；展示的是几何上允许的一族事件。</li>
+          <li>O 的双重用途按第 1 节说明：示例事件可视为第一次相互作用位置；不同事件比较时只是公共方向原点。</li>
+          <li>φ 的滑块步长较小但有限；极点附近角度辅助线会退化为不可见或极短，而物理量仍给出有限值。</li>
+          <li>本版本不实现 Compton data space、球面到平面投影、图像重建或固定 45° 辅助锥。所有位置与角度都按完整双精度计算后再送入渲染。</li>
+          <li>红色锥面在 φ = 90° 附近是真实几何的平面盘；φ 接近 0° 或 180° 时锥面接近一条射线并可能显得薄。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="validation-modal" class="modal-backdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="validation-title">
+        <button class="modal-close" type="button" data-close-modal aria-label="关闭">×</button>
+        <h2 id="validation-title">页面内数学验证</h2>
+        <p class="modal-kicker">DOUBLE-PRECISION CHECKS · SAME FUNCTIONS AS THE RENDERER</p>
+        <p>以下检查直接调用页面使用的物理函数，覆盖方向/角度约定、反投影轴、event circle、退化角、历史记录不变性、独立数值例子与能量关系。双精度非退化条件的目标容差为 10<sup>−10</sup>；WebGL 渲染缓冲不参与此容差。</p>
+        <div id="validation-summary"></div>
+        <div id="validation-groups" class="validation-groups"></div>
+        <div class="example-box">
+          <b>独立数值例子。</b> 取 s₀ = (0,0,1)，b₁ = (1,0,0)，b₂ = (0,1,0)，R = 1，φ = 60°。完整 A 轨迹满足 z = 0.5、x² + y² = 0.75：平面高度 0.5，欧氏半径 √3/2，而不是“半径 60°”或“半径 π/3”。β = 0° 与 360° 姿态相同，但 0°→360° 的扫描必须留下完整圆周。
+        </div>
+        <div id="validation-checks"></div>
+        <div class="validation-actions">
+          <button id="validation-run" class="ghost-button" type="button">重新运行</button>
+          <button class="ghost-button" type="button" data-close-modal>关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <div class="loading-title">BUILDING REAL-SPACE GEOMETRY</div>
+        <div class="loading-subtitle">正在初始化 WebGL 场景与物理自检…</div>
+      </div>
+    </div>
+
+    <div id="fatal-error" class="fatal-error" hidden>
+      <div class="fatal-card">
+        <h2>无法启动三维场景</h2>
+        <p>页面需要本地 WebGL 支持。请确认浏览器未禁用硬件加速，或换用较新版本的 Chrome / Edge / Safari / Firefox。此页面不依赖联网加载资源。</p>
+        <div class="fatal-message">初始化错误。</div>
+        <button type="button" onclick="location.reload()">重新加载</button>
+      </div>
+    </div>
+
+    <noscript>
+      <div>此交互页面需要启用 JavaScript 与 WebGL。</div>
+    </noscript>
+  </div>
+
+  <script>
+    (function () {
+      var overlay = document.getElementById('fatal-error');
+      function showFatal(message) {
+        if (!overlay) return;
+        var copy = overlay.querySelector('.fatal-message');
+        if (copy) copy.textContent = message || '未知初始化错误。';
+        overlay.hidden = false;
+        var loading = document.getElementById('loading-overlay');
+        if (loading) loading.classList.add('hidden');
+      }
+      window.__showComptonFatal = showFatal;
+      window.addEventListener('error', function (event) {
+        if (!window.__COMPTON__) {
+          showFatal(event.message || '脚本加载失败。请查看浏览器控制台。');
+        }
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        if (!window.__COMPTON__) {
+          var reason = event.reason;
+          showFatal(reason && reason.message ? reason.message : String(reason || '未处理的初始化异常。'));
+        }
+      });
+      window.setTimeout(function () {
+        if (!window.__COMPTON__) {
+          showFatal('场景在预期时间内未初始化完成。请检查 WebGL 是否可用，或打开浏览器控制台查看详细错误。');
+        }
+      }, 9000);
+    })();
+  </script>
+  <script>/*__APP_BUNDLE__*/</script>
+</body>
+</html>

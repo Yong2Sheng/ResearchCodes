@@ -1,0 +1,50 @@
+{
+  "name": "compton-telescope-visualization",
+  "version": "1.0.0",
+  "description": "Offline Compton telescope demonstrations: event-cone rotation, photon reconstruction and Compton Data Space.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests/run-validation.mjs",
+    "test:psi": "node tests/psi-geometry.mjs",
+    "test:browser": "node tests/browser-acceptance.mjs",
+    "build:reconstruction": "node build-reconstruction.mjs",
+    "build:all": "node build.mjs && node build-reconstruction.mjs && node build-scattering.mjs",
+    "test:reconstruction": "node tests/reconstruction-physics.mjs",
+    "test:reconstruction-browser": "node tests/reconstruction-browser.mjs",
+    "test:notation": "node tests/varphi-notation.mjs",
+    "test:origin": "node tests/reconstruction-origin.mjs",
+    "test:projection-seams": "node tests/projection-seams.mjs",
+    "test:audit-fixes": "node tests/audit-fixes-browser.mjs",
+    "test:angle-guides": "node tests/angle-relations.mjs",
+    "test:angle-guides-browser": "node tests/angle-guides-browser.mjs",
+    "build:scattering": "node build-scattering.mjs",
+    "test:scattering": "node tests/scattering-physics.mjs",
+    "test:scattering-browser": "node tests/scattering-browser.mjs",
+    "test:scattering-reveal": "node tests/scattering-reveal.mjs"
+  },
+  "keywords": [
+    "compton-telescope",
+    "webgl",
+    "threejs",
+    "astronomy",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yong2Sheng/ResearchCodes.git",
+    "directory": "docs/tutorials/COSI/Compton_Telescope_Visualization"
+  },
+  "dependencies": {
+    "katex": "^0.19.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "playwright-core": "^1.52.0",
+    "three": "^0.160.0"
+  }
+}
