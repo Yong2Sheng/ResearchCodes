@@ -1,0 +1,22 @@
+# Installed dependencies; reproducible from package-lock.json.
+/node_modules/
+
+# Generated screenshots, test logs and historical working outputs.
+/artifacts/
+/output/
+
+# Local system/editor state.
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.log
+
+# Local credentials and machine-specific settings.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Both delivered root HTML files are intentionally versioned.
