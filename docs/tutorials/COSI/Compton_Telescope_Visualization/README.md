@@ -2,7 +2,7 @@
 
 # Compton Telescope Visualization
 
-Five offline interactive demos for research talks and teaching: three 3D WebGL demos — event-cone geometry, photon event reconstruction and the Compton Data Space (CDS), and the 2D-to-3D Compton scattering process — plus two focused explainers on ASAD grid readout / polarization calibration and Compton distance cuts. Open the HTML files directly; no server is needed, and the three 3D demos require a WebGL-capable browser.
+Six offline interactive demos for research talks and teaching: three 3D WebGL demos — event-cone geometry, photon event reconstruction and the Compton Data Space (CDS), and the 2D-to-3D Compton scattering process — plus three focused interactive explainers on ASAD grid readout / polarization calibration, Compton distance cuts, and the COSI polarization reference basis. Open the HTML files directly; no server is needed, and the three 3D demos require a WebGL-capable browser.
 
 This project is maintained as one of the COSI tutorials in the `ResearchCodes` repository.
 
@@ -17,8 +17,9 @@ Click a page name to open the live demo (GitHub Pages) — nothing to download. 
 | [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | **Step-by-step walkthrough.** Electron at rest and incident photon → one Compton scatter, with the scattered photon and recoil electron revealed together → measurements at the two interaction sites → planar-to-3D camera move → event circle and candidate incident-direction sweep. Includes energy and scattering-angle controls, automatic stepping, Chinese/English UI and free navigation. |
 | [asad-polarization-lab-v2-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/asad-polarization-lab-v2-bilingual.html) | **Polarization and grid calibration.** Study a 2D ASAD grid readout with unpolarized and adjustable-polarization inputs: pseudo-structure from grid rounding, polarization modulation, a distance cut, single-event direction readout, and a 2×2 transfer-matrix calibration. Teaching model only — not a real COSI response. |
 | [compton-distance-cuts-standalone-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-distance-cuts-standalone-bilingual.html) | **Distance cuts.** Drag the first-interaction distance to compare the direction range under fixed position uncertainty; shorter events are less certain about the direction. 2D teaching sketch with a fixed 0.5 mm error radius, not a COSI calibration or ARM result. |
+| [cosi-polarization-3d-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/cosi-polarization-3d-bilingual.html) | **Polarization reference basis.** Interactive 3D illustration of the COSI spacecraft frame: adjust source zenith/azimuth and polarization angle, switch the MEGAlib RelativeX/Y/Z basis, and see how the zero-angle axis and polarization plane change. Geometry illustration only — not a detector shape or a Compton distribution. |
 
-`event-cone-rotation.html` is the new name of the original rotation animation. The transitional projection preview page has been removed; both projections remain available in the full demo. The last two topic demos are standalone bilingual pages; the first three are generated from the source under `src/`.
+`event-cone-rotation.html` is the new name of the original rotation animation. The transitional projection preview page has been removed; both projections remain available in the full demo. The last three topic demos are standalone bilingual pages; the first three are generated from the source under `src/`.
 
 ## Documentation
 
@@ -32,7 +33,7 @@ The current version does not implement rigid translation of the standard cone fo
 
 ## Build
 
-The HTML files embed all required scripts. The KaTeX math fonts used by the full demo are embedded as well, so the pages work offline. Build dependencies are only needed when changing the source and regenerating the pages. The two standalone topic demos are delivered as-is and are not part of `npm run build:all`.
+The HTML files embed all required scripts. The KaTeX math fonts used by the full demo are embedded as well, so the pages work offline. Build dependencies are only needed when changing the source and regenerating the pages. The three standalone topic demos are delivered as-is and are not part of `npm run build:all`.
 
 ```bash
 npm install
@@ -70,7 +71,7 @@ Browser checks require Google Chrome.
 
 ## Project layout
 
-- Root `*.html`: five standalone demo pages; the first three are generated from `src/`, the two topic demos are delivered as-is.
+- Root `*.html`: six standalone demo pages; the first three are generated from `src/`, the three topic demos are delivered as-is.
 - `src/physics.js`, `src/geometry.js`: shared angle conventions, vectors, energies and event-cone geometry.
 - `src/app.js`, `src/scene.js`, `src/history.js`: rotation demo.
 - `src/event-simulation.js`: idealized event generation, Klein–Nishina sampling and reconstruction.
