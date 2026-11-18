@@ -2,7 +2,7 @@
 
 # Compton Telescope Visualization
 
-用于科研演讲与教学的五组离线交互演示：三个三维 WebGL 演示（event cone 的几何关系、光子事件重建与 Compton Data Space（CDS）、从 2D 到 3D 的 Compton 散射过程），以及两个专题讲解页面（ASAD 格点读出与偏振校准、Compton 距离 cut）。直接双击 HTML 即可使用，不需要启动服务器；三个三维演示需要支持 WebGL 的浏览器。
+用于科研演讲与教学的六组离线交互演示：三个三维 WebGL 演示（event cone 的几何关系、光子事件重建与 Compton Data Space（CDS）、从 2D 到 3D 的 Compton 散射过程），以及三个专题讲解页面（ASAD 格点读出与偏振校准、Compton 距离 cut、COSI 偏振参考基底）。直接双击 HTML 即可使用，不需要启动服务器；三个三维演示需要支持 WebGL 的浏览器。
 
 本项目作为 `ResearchCodes` 仓库中 `docs/tutorials/COSI/` 下的教程之一维护。
 
@@ -17,8 +17,9 @@
 | [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | **分步讲解。** 静止电子与入射光子 → 一次 Compton 散射，散射光子与反冲电子同时逐步显现 → 两处相互作用的测量 → 平面到 3D 的相机过渡 → event circle 与候选入射方向的扫描。支持能量与散射角设置、自动步进、中英文和自由观察。 |
 | [asad-polarization-lab-v2-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/asad-polarization-lab-v2-bilingual.html) | **偏振与格点校准。** 在同一套二维 ASAD 格点读出下比较无偏振与可调偏振输入：格点取整带来的伪结构、偏振调制、距离 cut、单事件方向读出，以及用 2×2 传递矩阵反求偏振度与方向。仅为教学模型，不代表真实 COSI 响应。 |
 | [compton-distance-cuts-standalone-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-distance-cuts-standalone-bilingual.html) | **距离 cut。** 拖动第一段距离，比较固定位置误差下的方向范围：距离越短，方向越不确定。二维教学示意，误差半径固定为 0.5 mm，不代表 COSI 标定误差或实际 ARM。 |
+| [cosi-polarization-3d-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/cosi-polarization-3d-bilingual.html) | **偏振参考基底。** COSI spacecraft 坐标下线偏振参考基底的交互式 3D 示意：调节光源天顶角、方位角与偏振角，切换 MEGAlib RelativeX/Y/Z 基底，观察零度轴与偏振平面如何变化。仅为几何示意，不代表探测器外形或 Compton 散射分布。 |
 
-`event-cone-rotation.html` 是最初旋转动画的新文件名。过渡用的投影预览页面已删除，两种投影继续保留在完整演示中。最后两个专题演示为独立成页的双语页面；前三个由 `src/` 下的源码构建。
+`event-cone-rotation.html` 是最初旋转动画的新文件名。过渡用的投影预览页面已删除，两种投影继续保留在完整演示中。最后三个专题演示为独立成页的双语页面；前三个由 `src/` 下的源码构建。
 
 ## 说明文档
 
@@ -32,7 +33,7 @@
 
 ## 构建
 
-HTML 已内嵌所需脚本。完整演示的 KaTeX 数学字体也内嵌在文件中，离线可用。只有需要修改源码并重新生成页面时，才需要安装构建依赖。两个专题演示页面按原样交付，不参与 `npm run build:all`。
+HTML 已内嵌所需脚本。完整演示的 KaTeX 数学字体也内嵌在文件中，离线可用。只有需要修改源码并重新生成页面时，才需要安装构建依赖。三个专题演示页面按原样交付，不参与 `npm run build:all`。
 
 ```bash
 npm install
@@ -70,7 +71,7 @@ npm run test:scattering-reveal
 
 ## 项目结构
 
-- 根目录 `*.html`：五个独立演示页面；前三个由 `src/` 构建，两个专题演示按原样交付。
+- 根目录 `*.html`：六个独立演示页面；前三个由 `src/` 构建，三个专题演示按原样交付。
 - `src/physics.js`、`src/geometry.js`：共享角度约定、向量、能量和 event cone 几何。
 - `src/app.js`、`src/scene.js`、`src/history.js`：绕源旋转演示。
 - `src/event-simulation.js`：理想事件生成、Klein–Nishina 抽样与重建。

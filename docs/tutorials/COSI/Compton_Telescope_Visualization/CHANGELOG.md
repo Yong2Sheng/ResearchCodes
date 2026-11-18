@@ -19,10 +19,12 @@
 
 ### 新增
 
+- `feat` 新增 `cosi-polarization-3d-bilingual.html`：COSI spacecraft 坐标下线偏振参考基底的交互式 3D 示意，含光源天顶角、方位角、偏振角调节与 MEGAlib RelativeX/Y/Z 基底切换。（提交 `9fd775c`）
 - `feat` 新增两个双语交互专题演示：`asad-polarization-lab-v2-bilingual.html`（ASAD 二维格点读出、偏振调制与传递矩阵校准）与 `compton-distance-cuts-standalone-bilingual.html`（Compton 距离 cut 与方向不确定度）。（提交 `2c91141`）
 
 ### 文档
 
+- `docs` 将偏振 3D 演示加入中英文 README 与 COSI 索引页。（本提交）
 - `docs` README 默认改为英文显示（`README.md`），中文版保留为 `README.zh.md`；两个新演示加入页面入口表、构建说明和项目结构。（本提交）
 
 ### 仓库调整

@@ -8,7 +8,7 @@ The demos are self-contained HTML pages. Open them directly from GitHub Pages, o
 
 ### Compton telescope visualization
 
-[Compton Telescope Visualization](Compton_Telescope_Visualization/) collects five interactive demos on event cones, photon reconstruction and Compton Data Space (CDS):
+[Compton Telescope Visualization](Compton_Telescope_Visualization/) collects six interactive demos on event cones, photon reconstruction and Compton Data Space (CDS), and the COSI polarization reference basis:
 
 | Demo | What it shows |
 | --- | --- |
@@ -17,6 +17,7 @@ The demos are self-contained HTML pages. Open them directly from GitHub Pages, o
 | [compton-scattering.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-scattering.html) | Step-by-step 2D-to-3D Compton scattering: scattered photon and recoil electron, interaction sites, event circle and candidate directions. |
 | [asad-polarization-lab-v2-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/asad-polarization-lab-v2-bilingual.html) | ASAD grid readout, polarization modulation, distance cut, single-event readout and 2×2 transfer-matrix calibration (teaching model). |
 | [compton-distance-cuts-standalone-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/compton-distance-cuts-standalone-bilingual.html) | How fixed position uncertainty enlarges the direction range at short interaction distances. |
+| [cosi-polarization-3d-bilingual.html](https://yong2sheng.github.io/ResearchCodes/tutorials/COSI/Compton_Telescope_Visualization/cosi-polarization-3d-bilingual.html) | Interactive 3D illustration of the COSI polarization reference basis: source zenith/azimuth, polarization angle, and MEGAlib RelativeX/Y/Z basis switching. |
 
 ## Notebook tutorials
 
